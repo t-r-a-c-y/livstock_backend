@@ -1,6 +1,5 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.request.ActivityRequest;
 import com.livestock.backend.dto.response.ActivityResponse;
 import com.livestock.backend.model.Activity;

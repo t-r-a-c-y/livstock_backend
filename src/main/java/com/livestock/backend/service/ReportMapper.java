@@ -1,10 +1,8 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.request.ReportGenerateRequest;
 import com.livestock.backend.dto.response.ReportResponse;
 import com.livestock.backend.model.Report;
-import com.livestock.backend.model.UserProfile;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

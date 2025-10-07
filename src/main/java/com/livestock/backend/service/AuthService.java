@@ -1,58 +1,56 @@
 package com.livestock.backend.service;
 
+import com.livestock.backend.dto.request.LoginRequest;
+import com.livestock.backend.dto.request.RegisterRequest;
+import com.livestock.backend.dto.response.JwtResponse;
 import com.livestock.backend.model.UserProfile;
-import com.livestock.backend.model.UserRole;
 import com.livestock.backend.repository.UserProfileRepository;
-import com.livestock.backend.util.JwtUtils;
+import com.livestock.backend.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.passwordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtils jwtUtils;
 
-    public AuthService(UserProfileRepository userProfileRepository, PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+    public AuthService(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
+                       UserProfileRepository userProfileRepository, PasswordEncoder passwordEncoder) {
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
         this.userProfileRepository = userProfileRepository;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtils = jwtUtils;
     }
 
-    public UserProfile signup(String email, String password, String name, String phone, UserRole role) {
-        if (userProfileRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-        UserProfile user = new UserProfile();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setName(name);
-        user.setPhone(phone);
-        user.setRole(role != null ? role : UserRole.MANAGER);
-        return userProfileRepository.save(user);
-    }
-
-    public String login(String email, String password) {
+    public JwtResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return jwtUtils.generateJwtToken(authentication);
+        String jwt = jwtTokenProvider.generateToken(authentication);
+        return new JwtResponse(jwt);
+    }
+
+    public void register(RegisterRequest registerRequest) {
+        UserProfile user = new UserProfile();
+        user.setName(registerRequest.getName());
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole("USER");
+        userProfileRepository.save(user);
     }
 
     public UserProfile getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof UserProfile) {
-            return (UserProfile) auth.getPrincipal();
-        }
-        throw new RuntimeException("No current user");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userProfileRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

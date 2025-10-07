@@ -1,9 +1,9 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.request.AnimalRequest;
 import com.livestock.backend.dto.response.AnimalResponse;
 import com.livestock.backend.model.Animal;
+import com.livestock.backend.model.Owner;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -15,14 +15,14 @@ public interface AnimalMapper {
     @Mapping(target = "parent", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "financialRecords", ignore = true)
     Animal toEntity(AnimalRequest request);
 
     @Mapping(target = "owner", source = "owner")
     @Mapping(target = "parent", source = "parent")
     AnimalResponse toResponse(Animal animal);
 
-    // Add custom mappings if needed for summaries
-    default AnimalResponse.OwnerSummary map(Animal.owner owner) {
+    default AnimalResponse.OwnerSummary mapOwnerSummary(Owner owner) {
         if (owner == null) return null;
         AnimalResponse.OwnerSummary summary = new AnimalResponse.OwnerSummary();
         summary.setId(owner.getId());
@@ -32,12 +32,11 @@ public interface AnimalMapper {
         return summary;
     }
 
-    default AnimalResponse.AnimalSummary map(Animal parent) {
+    default AnimalResponse.AnimalSummary mapAnimalSummary(Animal parent) {
         if (parent == null) return null;
         AnimalResponse.AnimalSummary summary = new AnimalResponse.AnimalSummary();
         summary.setId(parent.getId());
         summary.setTagId(parent.getTagId());
         return summary;
     }
-    // Similar for activities
 }
