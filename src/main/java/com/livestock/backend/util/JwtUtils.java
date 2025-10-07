@@ -1,7 +1,6 @@
 package com.livestock.backend.util;
 
-
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -41,7 +40,6 @@ public class JwtUtils {
             Jwts.parser().verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes())).build().parse(authToken);
             return true;
         } catch (Exception e) {
-            // Log error
             return false;
         }
     }

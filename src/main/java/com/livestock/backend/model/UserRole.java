@@ -1,4 +1,5 @@
 package com.livestock.backend.model;
 
-public class UserRole {
+public enum UserRole {
+    ADMIN, MANAGER, VIEWER
 }

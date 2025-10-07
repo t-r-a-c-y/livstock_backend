@@ -1,12 +1,13 @@
 package com.livestock.backend.config;
 
-
+import com.livestock.backend.service.UserDetailsServiceImpl;
 import com.livestock.backend.util.JwtUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,10 +21,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtUtils jwtUtils;
-    private final UserDetailsServiceImpl userDetailsService;  // You'll create this in Step 4
+    private final UserDetailsServiceImpl userDetailsService;
 
     public SecurityConfig(JwtUtils jwtUtils, UserDetailsServiceImpl userDetailsService) {
         this.jwtUtils = jwtUtils;
@@ -36,8 +38,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -48,7 +50,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter(jwtUtils, userDetailsService);  // Create JwtAuthFilter class below
+        return new JwtAuthFilter(jwtUtils, userDetailsService);
     }
 
     @Bean
@@ -72,7 +74,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));  // Adjust for your React frontend
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Adjust for frontend
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -1,4 +1,12 @@
 package com.livestock.backend.repository;
 
-public class OwnerRepository {
+import com.livestock.backend.model.Owner;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface OwnerRepository extends JpaRepository<Owner, UUID>, JpaSpecificationExecutor<Owner> {
 }
