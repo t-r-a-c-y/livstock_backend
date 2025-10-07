@@ -9,4 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface AnimalRepository extends JpaRepository<Animal, UUID>, JpaSpecificationExecutor<Animal> {
+    long countByOwnerId(UUID ownerId);
 }

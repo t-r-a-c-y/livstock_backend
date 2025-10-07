@@ -1,103 +1,80 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.request.FinancialRequest;
 import com.livestock.backend.dto.response.FinancialResponse;
 import com.livestock.backend.exception.ResourceNotFoundException;
 import com.livestock.backend.model.FinancialRecord;
-import com.livestock.backend.repository.FinancialRepository;
-import com.livestock.backend.repository.AnimalRepository;
-import com.livestock.backend.repository.OwnerRepository;
+import com.livestock.backend.model.UserProfile;
+import com.livestock.backend.repository.FinancialRecordRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class FinancialService {
 
-    private final FinancialRepository financialRepository;
-    private final OwnerRepository ownerRepository;
-    private final AnimalRepository animalRepository;
+    private final FinancialRecordRepository financialRecordRepository;
     private final FinancialMapper financialMapper;
+    private final AuthService authService;
 
-    public FinancialService(FinancialRepository financialRepository, OwnerRepository ownerRepository, AnimalRepository animalRepository, FinancialMapper financialMapper) {
-        this.financialRepository = financialRepository;
-        this.ownerRepository = ownerRepository;
-        this.animalRepository = animalRepository;
+    public FinancialService(FinancialRecordRepository financialRecordRepository, FinancialMapper financialMapper, AuthService authService) {
+        this.financialRecordRepository = financialRecordRepository;
         this.financialMapper = financialMapper;
-    }
-
-    public Page<FinancialResponse> getAllFinancialRecords(int page, int size, String type, String category, Date dateFrom, Date dateTo, UUID ownerId) {
-        Pageable pageable = PageRequest.of(page, size);
-        Specification<FinancialRecord> spec = Specification.where(null);
-        if (type != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
-        if (category != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("category"), category));
-        if (dateFrom != null) spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), dateFrom));
-        if (dateTo != null) spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), dateTo));
-        if (ownerId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("owner").get("id"), ownerId));
-        return financialRepository.findAll(spec, pageable).map(financialMapper::toResponse);
-    }
-
-    public FinancialResponse getFinancialRecordById(UUID id) {
-        FinancialRecord record = financialRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Financial record not found"));
-        return financialMapper.toResponse(record);
+        this.authService = authService;
     }
 
     public FinancialResponse createFinancialRecord(FinancialRequest request) {
+        UserProfile currentUser = authService.getCurrentUser();
         FinancialRecord record = financialMapper.toEntity(request);
-        if (request.getOwnerId() != null) {
-            record.setOwner(ownerRepository.findById(request.getOwnerId()).orElseThrow(() -> new ResourceNotFoundException("Owner not found")));
-        }
-        if (request.getAnimalId() != null) {
-            record.setAnimal(animalRepository.findById(request.getAnimalId()).orElseThrow(() -> new ResourceNotFoundException("Animal not found")));
-        }
-        record.setCreatedAt(new Date());
-        record = financialRepository.save(record);
+        record.setOwner(currentUser.getOwner());
+        record = financialRecordRepository.save(record);
         return financialMapper.toResponse(record);
+    }
+
+    public FinancialResponse getFinancialRecordById(UUID id) {
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found with id: " + id));
+        return financialMapper.toResponse(record);
+    }
+
+    public Page<FinancialResponse> getAllFinancialRecords(Pageable pageable) {
+        UserProfile currentUser = authService.getCurrentUser();
+        Page<FinancialRecord> records = financialRecordRepository.findByOwnerId(currentUser.getOwner().getId(), pageable);
+        return records.map(financialMapper::toResponse);
+    }
+
+    public List<FinancialResponse> getAllFinancialRecords() {
+        UserProfile currentUser = authService.getCurrentUser();
+        List<FinancialRecord> records = financialRecordRepository.findByOwnerId(currentUser.getOwner().getId());
+        return records.stream()
+                .map(financialMapper::toResponse)
+                .toList();
     }
 
     public FinancialResponse updateFinancialRecord(UUID id, FinancialRequest request) {
-        FinancialRecord record = financialRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Financial record not found"));
-        record.setType(request.getType());
-        record.setCategory(request.getCategory());
-        record.setAmount(request.getAmount());
-        record.setDate(request.getDate());
-        record.setDescription(request.getDescription());
-        record.setPaymentMethod(request.getPaymentMethod());
-        record.setReceiptNumber(request.getReceiptNumber());
-        if (request.getOwnerId() != null) {
-            record.setOwner(ownerRepository.findById(request.getOwnerId()).orElseThrow(() -> new ResourceNotFoundException("Owner not found")));
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found with id: " + id));
+        UserProfile currentUser = authService.getCurrentUser();
+        if (!record.getOwner().getId().equals(currentUser.getOwner().getId())) {
+            throw new SecurityException("Unauthorized to update this financial record");
         }
-        if (request.getAnimalId() != null) {
-            record.setAnimal(animalRepository.findById(request.getAnimalId()).orElseThrow(() -> new ResourceNotFoundException("Animal not found")));
-        }
-        record = financialRepository.save(record);
-        return financialMapper.toResponse(record);
+        FinancialRecord updatedRecord = financialMapper.toEntity(request);
+        updatedRecord.setId(id);
+        updatedRecord.setOwner(record.getOwner());
+        updatedRecord = financialRecordRepository.save(updatedRecord);
+        return financialMapper.toResponse(updatedRecord);
     }
 
     public void deleteFinancialRecord(UUID id) {
-        financialRepository.deleteById(id);
-    }
-
-    public Map<String, Object> getFinancialStats(Date dateFrom, Date dateTo) {
-        Specification<FinancialRecord> spec = Specification.where(null);
-        if (dateFrom != null) spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), dateFrom));
-        if (dateTo != null) spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), dateTo));
-        List<FinancialRecord> records = financialRepository.findAll(spec);
-        double totalIncome = records.stream().filter(r -> "Income".equals(r.getType())).mapToDouble(FinancialRecord::getAmount).sum();
-        double totalExpense = records.stream().filter(r -> "Expense".equals(r.getType())).mapToDouble(FinancialRecord::getAmount).sum();
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalIncome", totalIncome);
-        stats.put("totalExpense", totalExpense);
-        stats.put("netProfit", totalIncome - totalExpense);
-        // Add by category using stream groupBy
-        return stats;
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found with id: " + id));
+        UserProfile currentUser = authService.getCurrentUser();
+        if (!record.getOwner().getId().equals(currentUser.getOwner().getId())) {
+            throw new SecurityException("Unauthorized to delete this financial record");
+        }
+        financialRecordRepository.delete(record);
     }
 }

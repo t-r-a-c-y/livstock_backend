@@ -3,9 +3,7 @@ package com.livestock.backend.dto.request;
 import lombok.Data;
 
 @Data
-public class UserRequest {
-    private String name;
+public class LoginRequest {
     private String email;
     private String password;
-    private String status;
 }

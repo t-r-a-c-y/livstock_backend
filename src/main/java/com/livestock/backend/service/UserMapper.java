@@ -1,6 +1,5 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.request.UserRequest;
 import com.livestock.backend.dto.response.UserResponse;
 import com.livestock.backend.model.UserProfile;

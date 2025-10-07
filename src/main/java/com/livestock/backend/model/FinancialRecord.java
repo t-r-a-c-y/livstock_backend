@@ -15,14 +15,9 @@ public class FinancialRecord {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String type; // Income/Expense
-    private String category;
+    private String type;
     private Double amount;
-    private Date date;
     private String description;
-    private String paymentMethod;
-    private String receiptNumber;
-    private String receiptImage;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
@@ -34,4 +29,6 @@ public class FinancialRecord {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
+
+    private String receiptImage;
 }

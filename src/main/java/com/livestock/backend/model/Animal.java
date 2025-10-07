@@ -17,30 +17,18 @@ public class Animal {
     private UUID id;
 
     private String tagId;
-    private String type;
+    private String species;
     private String breed;
     private String gender;
-    private Date dateOfBirth;
-    private String status;
+    private String healthStatus;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private Owner owner;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Animal parent;
-
-    private Double milkProduction;
-    private String photo;
-    private String notes;
-
-    @OneToMany(mappedBy = "animal", cascade = CascadeType.ALL)
-    private List<FinancialRecord> financialRecords;
+    @OneToMany(mappedBy = "animal")
+    private List<Activity> activities;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
-
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date updatedAt = new Date();
 }

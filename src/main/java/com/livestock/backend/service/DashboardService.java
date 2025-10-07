@@ -1,31 +1,45 @@
 package com.livestock.backend.service;
 
-
-
-import com.livestock.backend.dto.response.DashboardStatsResponse;
+import com.livestock.backend.model.UserProfile;
+import com.livestock.backend.repository.AnimalRepository;
+import com.livestock.backend.repository.FinancialRecordRepository;
+import com.livestock.backend.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class DashboardService {
 
-    private final AnimalService animalService;
-    private final OwnerService ownerService;
-    private final FinancialService financialService;
-    private final ActivityService activityService;
-    private final NotificationService notificationService;
+    private final AnimalRepository animalRepository;
+    private final FinancialRecordRepository financialRecordRepository;
+    private final NotificationRepository notificationRepository;
+    private final AuthService authService;
 
-    public DashboardService(AnimalService animalService, OwnerService ownerService, FinancialService financialService, ActivityService activityService, NotificationService notificationService) {
-        this.animalService = animalService;
-        this.ownerService = ownerService;
-        this.financialService = financialService;
-        this.activityService = activityService;
-        this.notificationService = notificationService;
+    public DashboardService(AnimalRepository animalRepository, FinancialRecordRepository financialRecordRepository,
+                            NotificationRepository notificationRepository, AuthService authService) {
+        this.animalRepository = animalRepository;
+        this.financialRecordRepository = financialRecordRepository;
+        this.notificationRepository = notificationRepository;
+        this.authService = authService;
     }
 
-    public DashboardStatsResponse getDashboardStats() {
-        DashboardStatsResponse response = new DashboardStatsResponse();
-        response.setAnimals(animalService.getAnimalStats());
-        // Set others similarly
-        return response;
+    public Map<String, Integer> getDashboardStats() {
+        UserProfile currentUser = authService.getCurrentUser();
+        UUID ownerId = currentUser.getOwner() != null ? currentUser.getOwner().getId() : null;
+
+        Map<String, Integer> stats = new HashMap<>();
+        if (ownerId != null) {
+            stats.put("totalAnimals", (int) animalRepository.countByOwnerId(ownerId));
+            stats.put("totalFinancialRecords", (int) financialRecordRepository.countByOwnerId(ownerId));
+            stats.put("unreadNotifications", (int) notificationRepository.countByUserIdAndIsReadFalse(currentUser.getId()));
+        } else {
+            stats.put("totalAnimals", 0);
+            stats.put("totalFinancialRecords", 0);
+            stats.put("unreadNotifications", (int) notificationRepository.countByUserIdAndIsReadFalse(currentUser.getId()));
+        }
+        return stats;
     }
 }

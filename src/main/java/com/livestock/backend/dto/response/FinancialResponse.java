@@ -9,13 +9,8 @@ import java.util.UUID;
 public class FinancialResponse {
     private UUID id;
     private String type;
-    private String category;
     private Double amount;
-    private Date date;
     private String description;
-    private String paymentMethod;
-    private String receiptNumber;
-    private String receiptImage;
     private OwnerSummary owner;
     private AnimalSummary animal;
     private Date createdAt;

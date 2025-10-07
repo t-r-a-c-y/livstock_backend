@@ -19,16 +19,11 @@ public class Owner {
     private String name;
     private String email;
     private String phone;
-    private String address;
-    private String nationalId;
-    private String bankAccount;
-    private String emergencyContact;
-    private String notes;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "owner")
     private List<Animal> animals;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "owner")
     private List<FinancialRecord> financialRecords;
 
     @Temporal(TemporalType.TIMESTAMP)

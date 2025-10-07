@@ -1,6 +1,6 @@
 package com.livestock.backend.repository;
 
-import com.livestock.backend.model.Notification;
+import com.livestock.backend.model.FinancialRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
-    Page<Notification> findByUserId(UUID userId, Pageable pageable);
-    List<Notification> findByUserId(UUID userId);
-    long countByUserIdAndIsReadFalse(UUID userId);
+public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, UUID> {
+    Page<FinancialRecord> findByOwnerId(UUID ownerId, Pageable pageable);
+    List<FinancialRecord> findByOwnerId(UUID ownerId);
+    long countByOwnerId(UUID ownerId);
 }
