@@ -16,4 +16,13 @@ public class NotificationDTO {
     private boolean isRead;
     private UUID userId;
     private LocalDateTime createdAt;
+
+    // Explicit getters and setters for isRead to avoid Lombok issues
+    public boolean getIsRead() {
+        return isRead;
+    }
+
+    public void setIsRead(boolean isRead) {
+        this.isRead = isRead;
+    }
 }
