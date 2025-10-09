@@ -1,34 +1,53 @@
 package com.livestock.backend.model;
 
+
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "financial_records")
 @Data
 public class FinancialRecord {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
     private UUID id;
 
     private String type;
-    private Double amount;
+
+    private LocalDate date;
+
+    private BigDecimal amount;
+
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private Owner owner;
+    @Column(name = "payment_method")
+    private String paymentMethod;
 
-    @ManyToOne
-    @JoinColumn(name = "animal_id")
-    private Animal animal;
+    @Column(name = "receipt_number")
+    private String receiptNumber;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt = new Date();
-
+    @Column(name = "receipt_image")
     private String receiptImage;
+
+    @Column(name = "activity_id")
+    private UUID activityId;
+
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

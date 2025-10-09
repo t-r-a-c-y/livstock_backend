@@ -1,34 +1,60 @@
 package com.livestock.backend.model;
 
+
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
-import java.util.Date;
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "animals")
 @Data
 public class Animal {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
     private UUID id;
 
+    @Column(name = "tag_id", unique = true)
     private String tagId;
-    private String species;
+
+    private String type;
+
     private String breed;
+
     private String gender;
-    private String healthStatus;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private Owner owner;
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
-    @OneToMany(mappedBy = "animal")
-    private List<Activity> activities;
+    @Column(name = "owner_id")
+    private UUID ownerId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt = new Date();
+    private String status;
+
+    @Column(name = "milk_production")
+    private BigDecimal milkProduction;
+
+    private String photo;
+
+    @Column(name = "parent_id")
+    private UUID parentId;
+
+    @Column(name = "sale_price")
+    private BigDecimal salePrice;
+
+    private String notes;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
