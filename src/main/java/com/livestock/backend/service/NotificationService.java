@@ -1,59 +1,71 @@
 package com.livestock.backend.service;
 
-import com.livestock.backend.dto.request.NotificationRequest;
-import com.livestock.backend.dto.response.NotificationResponse;
+import com.livestock.backend.dto.NotificationDTO;
 import com.livestock.backend.model.Notification;
 import com.livestock.backend.repository.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
 
-    private final NotificationRepository notificationRepository;
-    private final NotificationMapper notificationMapper;
-    private final AuthService authService;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
-    public NotificationService(NotificationRepository notificationRepository, NotificationMapper notificationMapper, AuthService authService) {
-        this.notificationRepository = notificationRepository;
-        this.notificationMapper = notificationMapper;
-        this.authService = authService;
+    @Transactional(readOnly = true)
+    public Page<NotificationDTO> getAll(Pageable pageable) {
+        logger.info("Fetching notifications for current user");
+        UUID userId = getCurrentUserId();
+        Specification<Notification> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")))
+                .and((root, query, cb) -> cb.equal(root.get("userId"), userId));
+        return notificationRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
-    public NotificationResponse createNotification(NotificationRequest request) {
-        Notification notification = notificationMapper.toEntity(request);
-        notification.setUser(authService.getCurrentUser());
-        notification = notificationRepository.save(notification);
-        return notificationMapper.toResponse(notification);
-    }
-
-    public Page<NotificationResponse> getNotifications(Pageable pageable) {
-        UUID userId = authService.getCurrentUser().getId();
-        Page<Notification> notifications = notificationRepository.findByUserId(userId, pageable);
-        return notifications.map(notificationMapper::toResponse);
-    }
-
-    public List<NotificationResponse> getAllNotifications() {
-        UUID userId = authService.getCurrentUser().getId();
-        List<Notification> notifications = notificationRepository.findByUserId(userId);
-        return notifications.stream()
-                .map(notificationMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
+    @Transactional
     public void markAsRead(UUID id) {
-        Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
-        UUID userId = authService.getCurrentUser().getId();
-        if (!notification.getUser().getId().equals(userId)) {
-            throw new SecurityException("Unauthorized to mark this notification as read");
-        }
-        notification.setRead(true);
+        logger.info("Marking notification as read: {}", id);
+        Notification notification = notificationRepository.findById(id).orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (notification.getDeletedAt() != null) throw new RuntimeException("Notification deleted");
+        if (!notification.getUserId().equals(getCurrentUserId())) throw new RuntimeException("Not your notification");
+        notification.setIsRead(true);
+        notification.setReadAt(LocalDateTime.now());
         notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void softDelete(UUID id) {
+        logger.info("Soft deleting notification: {}", id);
+        Notification notification = notificationRepository.findById(id).orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (!notification.getUserId().equals(getCurrentUserId())) throw new RuntimeException("Not your notification");
+        notification.setDeletedAt(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+
+    private NotificationDTO toDTO(Notification notification) {
+        NotificationDTO dto = new NotificationDTO();
+        dto.setId(notification.getId());
+        dto.setUserId(notification.getUserId());
+        dto.setMessage(notification.getMessage());
+        dto.setIsRead(notification.getIsRead());
+        dto.setReadAt(notification.getReadAt());
+        dto.setActionRequired(notification.getActionRequired());
+        dto.setRelatedEntityType(notification.getRelatedEntityType());
+        dto.setRelatedEntityId(notification.getRelatedEntityId());
+        dto.setCreatedAt(notification.getCreatedAt());
+        return dto;
+    }
+
+    private UUID getCurrentUserId() {
+        // same as above
     }
 }

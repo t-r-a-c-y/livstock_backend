@@ -1,13 +1,10 @@
 package com.livestock.backend.repository;
 
-
-
 import com.livestock.backend.model.Report;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.UUID;
 
-@Repository
-public interface ReportRepository extends JpaRepository<Report, UUID> {
+public interface ReportRepository extends JpaRepository<Report, UUID>, JpaSpecificationExecutor<Report> {
 }

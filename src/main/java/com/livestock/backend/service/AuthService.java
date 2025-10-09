@@ -4,7 +4,7 @@ import com.livestock.backend.dto.request.LoginRequest;
 import com.livestock.backend.dto.request.RegisterRequest;
 import com.livestock.backend.dto.response.JwtResponse;
 import com.livestock.backend.model.UserProfile;
-import com.livestock.backend.repository.UserProfileRepository;
+import com.livestock.backend.repository.ProfileRepository;
 import com.livestock.backend.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,11 +18,11 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserProfileRepository userProfileRepository;
+    private final ProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
-                       UserProfileRepository userProfileRepository, PasswordEncoder passwordEncoder) {
+                       ProfileRepository userProfileRepository, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userProfileRepository = userProfileRepository;

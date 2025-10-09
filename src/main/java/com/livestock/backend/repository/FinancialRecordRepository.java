@@ -1,17 +1,19 @@
 package com.livestock.backend.repository;
 
-import com.livestock.backend.model.FinancialRecord;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.livestock.backend.dto.FinancialSummaryDTO;
+import com.livestock.backend.model.FinancialRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.UUID;
 
-@Repository
-public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, UUID> {
-    Page<FinancialRecord> findByOwnerId(UUID ownerId, Pageable pageable);
-    List<FinancialRecord> findByOwnerId(UUID ownerId);
-    long countByOwnerId(UUID ownerId);
+public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, UUID>, JpaSpecificationExecutor<FinancialRecord> {
+    @Query("SELECT new com.example.livestockbackend.dto.FinancialSummaryDTO(" +
+            "COALESCE(SUM(CASE WHEN f.type = 'income' THEN f.amount ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN f.type = 'expense' THEN f.amount ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN f.type = 'income' THEN f.amount ELSE -f.amount END), 0) " +
+            ") FROM FinancialRecord f WHERE f.deletedAt IS NULL")
+    FinancialSummaryDTO getSummary();
 }

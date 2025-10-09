@@ -1,115 +1,105 @@
 package com.livestock.backend.service;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Paragraph;
-import com.livestock.backend.dto.request.ReportGenerateRequest;
-import com.livestock.backend.dto.response.ReportResponse;
-import com.livestock.backend.exception.ResourceNotFoundException;
 import com.livestock.backend.model.Report;
 import com.livestock.backend.repository.ReportRepository;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class ReportService {
+    private static final Logger logger = LoggerFactory.getLogger(ReportService.class);
 
-    private final ReportRepository reportRepository;
-    private final ReportMapper reportMapper;
-    private final AnimalService animalService;
-    private final FinancialService financialService;
-    private final AuthService authService;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private ReportRepository reportRepository;
 
-    public ReportService(ReportRepository reportRepository, ReportMapper reportMapper, AnimalService animalService, FinancialService financialService, AuthService authService, ObjectMapper objectMapper) {
-        this.reportRepository = reportRepository;
-        this.reportMapper = reportMapper;
-        this.animalService = animalService;
-        this.financialService = financialService;
-        this.authService = authService;
-        this.objectMapper = objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private AnimalService animalService;  // For generating data
+
+    @Autowired
+    private FinancialRecordService financialRecordService;
+
+    // Add other services for data generation
+
+    @Transactional(readOnly = true)
+    public Page<ReportDTO> getAll(Pageable pageable) {
+        logger.info("Fetching reports");
+        Specification<Report> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
+        return reportRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
-    public Page<ReportResponse> getAllReports(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return reportRepository.findAll(pageable).map(reportMapper::toResponse);
-    }
+    @Transactional
+    public ReportDTO generate(ReportGenerateDTO dto) {
+        logger.info("Generating report of type: {}", dto.getType());
+        Report report = new Report();
+        report.setType(dto.getType());
+        report.setGeneratedBy(getCurrentUserId());
+        report.setDateFrom(dto.getDateFrom());
+        report.setDateTo(dto.getDateTo());
+        report.setCreatedAt(LocalDateTime.now());
 
-    public ReportResponse generateReport(ReportGenerateRequest request) {
-        Report report = reportMapper.toEntity(request);
-        report.setGeneratedBy(authService.getCurrentUser());
-        report.setCreatedAt(new Date());
-        report = reportRepository.save(report);
-        Map<String, Object> data = switch (request.getType()) {
-            case "Livestock" -> animalService.getAnimalStats();
-            case "Financial" -> financialService.getFinancialStats(request.getDateFrom(), request.getDateTo());
-            default -> new java.util.HashMap<>();
-        };
-        try {
-            report.setData(objectMapper.writeValueAsString(data));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize report data", e);
+        // Generate data based on type
+        Object generatedData;
+        if ("animal_stats".equals(dto.getType())) {
+            generatedData = animalService.getStats();
+        } else if ("financial_summary".equals(dto.getType())) {
+            generatedData = financialRecordService.getSummary();
+        } else {
+            throw new RuntimeException("Unknown report type");
         }
-        report.setStatus("Completed");
+
+        try {
+            report.setData(objectMapper.writeValueAsString(generatedData));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize report data");
+        }
+
         report = reportRepository.save(report);
-        return reportMapper.toResponse(report);
+        return toDTO(report);
     }
 
-    public ReportResponse getReportById(java.util.UUID id) {
-        Report report = reportRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Report not found"));
-        return reportMapper.toResponse(report);
+    @Transactional(readOnly = true)
+    public ReportDTO getById(UUID id) {
+        logger.info("Fetching report by ID: {}", id);
+        Report report = reportRepository.findById(id).orElseThrow(() -> new RuntimeException("Report not found"));
+        if (report.getDeletedAt() != null) throw new RuntimeException("Report deleted");
+        return toDTO(report);
     }
 
-    public ByteArrayInputStream downloadReport(java.util.UUID id, String format) throws IOException {
-        Report report = reportRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Report not found"));
-        return switch (format.toLowerCase()) {
-            case "pdf" -> generatePdf(report);
-            case "excel" -> generateExcel(report);
-            default -> throw new IllegalArgumentException("Invalid format");
-        };
+    @Transactional
+    public void softDelete(UUID id) {
+        logger.info("Soft deleting report: {}", id);
+        Report report = reportRepository.findById(id).orElseThrow(() -> new RuntimeException("Report not found"));
+        report.setDeletedAt(LocalDateTime.now());
+        reportRepository.save(report);
     }
 
-    private ByteArrayInputStream generatePdf(Report report) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PdfWriter writer = new PdfWriter(out);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-        document.add(new Paragraph("Report: " + report.getTitle()));
-        document.add(new Paragraph("Type: " + report.getType()));
-        document.add(new Paragraph("Generated on: " + report.getCreatedAt()));
-        document.add(new Paragraph("Data: " + report.getData()));
-        document.close();
-        return new ByteArrayInputStream(out.toByteArray());
+    private ReportDTO toDTO(Report report) {
+        ReportDTO dto = new ReportDTO();
+        dto.setId(report.getId());
+        dto.setType(report.getType());
+        dto.setGeneratedBy(report.getGeneratedBy());
+        dto.setDateFrom(report.getDateFrom());
+        dto.setDateTo(report.getDateTo());
+        dto.setData(report.getData());
+        dto.setCreatedAt(report.getCreatedAt());
+        return dto;
     }
 
-    private ByteArrayInputStream generateExcel(Report report) throws IOException {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet(report.getType() + " Report");
-        Row header = sheet.createRow(0);
-        header.createCell(0).setCellValue("Title");
-        header.createCell(1).setCellValue("Type");
-        header.createCell(2).setCellValue("Data");
-        Row row = sheet.createRow(1);
-        row.createCell(0).setCellValue(report.getTitle());
-        row.createCell(1).setCellValue(report.getType());
-        row.createCell(2).setCellValue(report.getData());
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
-        return new ByteArrayInputStream(out.toByteArray());
+    private UUID getCurrentUserId() {
+        // same as above
     }
 }

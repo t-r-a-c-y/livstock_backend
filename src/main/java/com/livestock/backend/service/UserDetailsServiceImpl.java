@@ -1,6 +1,6 @@
 package com.livestock.backend.service;
 
-import com.livestock.backend.repository.UserProfileRepository;
+import com.livestock.backend.repository.ProfileRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserProfileRepository userProfileRepository;
+    private final ProfileRepository userProfileRepository;
 
-    public UserDetailsServiceImpl(UserProfileRepository userProfileRepository) {
+    public UserDetailsServiceImpl(ProfileRepository userProfileRepository) {
         this.userProfileRepository = userProfileRepository;
     }
 

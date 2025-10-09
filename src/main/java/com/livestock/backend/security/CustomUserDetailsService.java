@@ -1,7 +1,7 @@
 package com.livestock.backend.security;
 
 import com.livestock.backend.model.UserProfile;
-import com.livestock.backend.repository.UserProfileRepository;
+import com.livestock.backend.repository.ProfileRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserProfileRepository userProfileRepository;
+    private final ProfileRepository userProfileRepository;
 
-    public CustomUserDetailsService(UserProfileRepository userProfileRepository) {
+    public CustomUserDetailsService(ProfileRepository userProfileRepository) {
         this.userProfileRepository = userProfileRepository;
     }
 
