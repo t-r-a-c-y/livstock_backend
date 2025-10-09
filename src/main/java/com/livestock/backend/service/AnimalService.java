@@ -1,9 +1,9 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.AnimalDTO;
 import com.livestock.backend.dto.AnimalStatsDTO;
 import com.livestock.backend.dto.AnimalWithOwnerDTO;
+import com.livestock.backend.dto.OwnerDTO;
 import com.livestock.backend.model.Animal;
 import com.livestock.backend.model.Owner;
 import com.livestock.backend.repository.AnimalRepository;
@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ public class AnimalService {
     @Transactional(readOnly = true)
     public Page<AnimalDTO> getAll(String type, String status, UUID ownerId, Pageable pageable) {
         logger.info("Fetching animals with filters: type={}, status={}, ownerId={}", type, status, ownerId);
-        Specification<Animal> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
+        Specification<Animal> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
         if (type != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
         if (status != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         if (ownerId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("ownerId"), ownerId));

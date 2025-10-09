@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface AnimalRepository extends JpaRepository<Animal, UUID>, JpaSpecificationExecutor<Animal> {
     long countByOwnerIdAndDeletedAtIsNull(UUID ownerId);
 
-    @Query("SELECT new com.example.livestockbackend.dto.AnimalStatsDTO(" +
+    @Query("SELECT new com.livestock.backend.dto.AnimalStatsDTO(" +
             "COUNT(a), " +
             "COUNT(CASE WHEN a.type = 'cow' THEN 1 END), " +
             "COUNT(CASE WHEN a.type = 'calf' THEN 1 END), " +

@@ -1,9 +1,7 @@
 package com.livestock.backend.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,8 +11,7 @@ import java.util.UUID;
 @Data
 public class Owner {
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @GeneratedValue
     private UUID id;
 
     private String name;
@@ -41,5 +38,5 @@ public class Owner {
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 }

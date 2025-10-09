@@ -11,9 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.nio.file.attribute.UserPrincipal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -30,7 +34,7 @@ public class ActivityService {
     @Transactional(readOnly = true)
     public Page<ActivityDTO> getAll(String type, LocalDateTime startDate, LocalDateTime endDate, UUID animalId, Pageable pageable) {
         logger.info("Fetching activities with filters");
-        Specification<Activity> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
+        Specification<Activity> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
         if (type != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
         if (animalId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("animalId"), animalId));
         if (startDate != null) spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), startDate));
@@ -128,7 +132,10 @@ public class ActivityService {
     }
 
     private UUID getCurrentUserId() {
-        // same as in AnimalService
-        // ...
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getId();
+        }
+        throw new RuntimeException("No authenticated user");
     }
 }
