@@ -13,14 +13,13 @@ public class SystemSettingsController {
     @Autowired
     private SystemSettingsService systemSettingsService;
 
-    @GetMapping
-    public ApiResponse<SettingsDTO> get() {
-        return new ApiResponse<>(systemSettingsService.getSettings(), null);
+    @GetMapping("/{key}")
+    public ApiResponse<SettingsDTO> get(@PathVariable String key) {
+        return new ApiResponse<>(systemSettingsService.getByKey(key), null);
     }
 
-    @PutMapping
-    public ApiResponse<Void> update(@Valid @RequestBody SettingsDTO dto) {
-        systemSettingsService.update(dto);
-        return new ApiResponse<>(null, null);
+    @PutMapping("/{key}")
+    public ApiResponse<SettingsDTO> update(@PathVariable String key, @Valid @RequestBody SettingsDTO dto) {
+        return new ApiResponse<>(systemSettingsService.update(key, dto), null);
     }
 }

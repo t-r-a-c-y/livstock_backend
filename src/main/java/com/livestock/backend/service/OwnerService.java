@@ -6,6 +6,7 @@ import com.livestock.backend.model.Owner;
 import com.livestock.backend.repository.AnimalRepository;
 import com.livestock.backend.repository.OwnerRepository;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,22 +28,21 @@ public class OwnerService {
     private AnimalRepository animalRepository;
 
     @Transactional(readOnly = true)
-    public Page<OwnerDTO> getAll(Pageable pageable) {
-        logger.info("Fetching owners");
-        Specification<Owner> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
-        return ownerRepository.findAll(spec, pageable).map(this::toDTO);
+    public Page<OwnerWithAnimalCountDTO> getAll(String name, Pageable pageable) {
+        logger.info("Fetching owners with name filter: {}", name);
+        Specification<Owner> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        if (name != null) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+        }
+        return ownerRepository.findAll(spec, pageable).map(this::toDTOWithCount);
     }
 
     @Transactional(readOnly = true)
-    public OwnerWithAnimalCountDTO getById(UUID id) {
+    public OwnerDTO getById(UUID id) {
         logger.info("Fetching owner by ID: {}", id);
         Owner owner = ownerRepository.findById(id).orElseThrow(() -> new RuntimeException("Owner not found"));
         if (owner.getDeletedAt() != null) throw new RuntimeException("Owner deleted");
-        long animalCount = animalRepository.countByOwnerIdAndDeletedAtIsNull(id);
-        OwnerWithAnimalCountDTO dto = new OwnerWithAnimalCountDTO();
-        dto.setOwner(toDTO(owner));
-        dto.setAnimalCount(animalCount);
-        return dto;
+        return toDTO(owner);
     }
 
     @Transactional
@@ -71,6 +71,9 @@ public class OwnerService {
     public void softDelete(UUID id) {
         logger.info("Soft deleting owner: {}", id);
         Owner owner = ownerRepository.findById(id).orElseThrow(() -> new RuntimeException("Owner not found"));
+        if (animalRepository.countByOwnerIdAndDeletedAtIsNull(id) > 0) {
+            throw new RuntimeException("Cannot delete owner with active animals");
+        }
         owner.setDeletedAt(LocalDateTime.now());
         ownerRepository.save(owner);
     }
@@ -87,6 +90,13 @@ public class OwnerService {
         dto.setEmergencyContact(owner.getEmergencyContact());
         dto.setCreatedAt(owner.getCreatedAt());
         dto.setUpdatedAt(owner.getUpdatedAt());
+        return dto;
+    }
+
+    private OwnerWithAnimalCountDTO toDTOWithCount(Owner owner) {
+        OwnerWithAnimalCountDTO dto = new OwnerWithAnimalCountDTO();
+        dto.setOwner(toDTO(owner));
+        dto.setAnimalCount(animalRepository.countByOwnerIdAndDeletedAtIsNull(owner.getId()));
         return dto;
     }
 

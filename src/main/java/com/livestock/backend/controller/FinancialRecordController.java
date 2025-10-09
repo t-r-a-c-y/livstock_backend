@@ -24,8 +24,9 @@ public class FinancialRecordController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) UUID activityId,
             Pageable pageable) {
-        return new ApiResponse<>(financialRecordService.getAll(type, startDate, endDate, pageable), null);
+        return new ApiResponse<>(financialRecordService.getAll(type, startDate, endDate, activityId, pageable), null);
     }
 
     @GetMapping("/{id}")

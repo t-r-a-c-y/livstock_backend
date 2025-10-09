@@ -1,6 +1,5 @@
 package com.livestock.backend.controller;
 
-
 import com.livestock.backend.dto.NotificationDTO;
 import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.NotificationService;
@@ -18,19 +17,15 @@ public class NotificationController {
     private NotificationService notificationService;
 
     @GetMapping
-    public ApiResponse<Page<NotificationDTO>> list(Pageable pageable) {
-        return new ApiResponse<>(notificationService.getAll(pageable), null);
+    public ApiResponse<Page<NotificationDTO>> list(
+            @RequestParam(required = false) Boolean isRead,
+            Pageable pageable) {
+        return new ApiResponse<>(notificationService.getAll(isRead, pageable), null);
     }
 
-    @PatchMapping("/{id}/read")
+    @PostMapping("/{id}/read")
     public ApiResponse<Void> markAsRead(@PathVariable UUID id) {
         notificationService.markAsRead(id);
-        return new ApiResponse<>(null, null);
-    }
-
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        notificationService.softDelete(id);
         return new ApiResponse<>(null, null);
     }
 }

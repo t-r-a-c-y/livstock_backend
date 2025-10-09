@@ -19,12 +19,14 @@ public class OwnerController {
     private OwnerService ownerService;
 
     @GetMapping
-    public ApiResponse<Page<OwnerDTO>> list(Pageable pageable) {
-        return new ApiResponse<>(ownerService.getAll(pageable), null);
+    public ApiResponse<Page<OwnerWithAnimalCountDTO>> list(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return new ApiResponse<>(ownerService.getAll(name, pageable), null);
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<OwnerWithAnimalCountDTO> get(@PathVariable UUID id) {
+    public ApiResponse<OwnerDTO> get(@PathVariable UUID id) {
         return new ApiResponse<>(ownerService.getById(id), null);
     }
 

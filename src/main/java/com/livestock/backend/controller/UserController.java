@@ -1,15 +1,15 @@
 package com.livestock.backend.controller;
 
-
 import com.livestock.backend.dto.UserCreateDTO;
 import com.livestock.backend.dto.UserDTO;
 import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,8 +19,8 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public ApiResponse<List<UserDTO>> list() {
-        return new ApiResponse<>(userService.getAll(), null);
+    public ApiResponse<Page<UserDTO>> list(Pageable pageable) {
+        return new ApiResponse<>(userService.getAll(pageable), null);
     }
 
     @GetMapping("/{id}")
@@ -40,7 +40,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+        userService.softDelete(id);
         return new ApiResponse<>(null, null);
     }
 }

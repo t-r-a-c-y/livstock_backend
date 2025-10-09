@@ -1,19 +1,13 @@
 package com.livestock.backend.service;
 
-
 import com.livestock.backend.dto.SettingsDTO;
 import com.livestock.backend.model.SystemSetting;
 import com.livestock.backend.repository.SystemSettingRepository;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class SystemSettingsService {
@@ -23,29 +17,28 @@ public class SystemSettingsService {
     private SystemSettingRepository systemSettingRepository;
 
     @Transactional(readOnly = true)
-    @Cacheable("systemSettings")
-    public SettingsDTO getSettings() {
-        logger.info("Fetching system settings");
-        Map<String, String> settingsMap = new HashMap<>();
-        systemSettingRepository.findAll().forEach(setting -> settingsMap.put(setting.getKey(), setting.getValue()));
-        SettingsDTO dto = new SettingsDTO();
-        dto.setSettings(settingsMap);
-        return dto;
+    public SettingsDTO getByKey(String key) {
+        logger.info("Fetching setting by key: {}", key);
+        SystemSetting setting = systemSettingRepository.findById(key)
+                .orElseThrow(() -> new RuntimeException("Setting not found"));
+        return toDTO(setting);
     }
 
     @Transactional
-    @CacheEvict(value = "systemSettings", allEntries = true)
-    public void update(SettingsDTO dto) {
-        logger.info("Updating system settings");
-        dto.getSettings().forEach((key, value) -> {
-            SystemSetting setting = systemSettingRepository.findByKey(key);
-            if (setting == null) {
-                setting = new SystemSetting();
-                setting.setKey(key);
-            }
-            setting.setValue(value);
-            setting.setUpdatedAt(LocalDateTime.now());
-            systemSettingRepository.save(setting);
-        });
+    public SettingsDTO update(String key, SettingsDTO dto) {
+        logger.info("Updating setting: {}", key);
+        SystemSetting setting = systemSettingRepository.findById(key)
+                .orElse(new SystemSetting());
+        setting.setKey(key);
+        setting.setValue(dto.getValue());
+        setting = systemSettingRepository.save(setting);
+        return toDTO(setting);
+    }
+
+    private SettingsDTO toDTO(SystemSetting setting) {
+        SettingsDTO dto = new SettingsDTO();
+        dto.setKey(setting.getKey());
+        dto.setValue(setting.getValue());
+        return dto;
     }
 }

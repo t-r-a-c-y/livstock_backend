@@ -1,8 +1,12 @@
 package com.livestock.backend.service;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.livestock.backend.model.Report;
+import com.livestock.backend.dto.FinancialSummaryDTO;
+import com.livestock.backend.dto.ReportDTO;
+import com.livestock.backend.dto.ReportGenerateDTO;
+import com.livestock.backend.model.Animal;
+import com.livestock.backend.model.FinancialRecord;
+import com.livestock.backend.repository.AnimalRepository;
+import com.livestock.backend.repository.FinancialRecordRepository;
 import com.livestock.backend.repository.ReportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,49 +28,30 @@ public class ReportService {
     private ReportRepository reportRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private AnimalRepository animalRepository;
 
     @Autowired
-    private AnimalService animalService;  // For generating data
-
-    @Autowired
-    private FinancialRecordService financialRecordService;
-
-    // Add other services for data generation
+    private FinancialRecordRepository financialRecordRepository;
 
     @Transactional(readOnly = true)
     public Page<ReportDTO> getAll(Pageable pageable) {
-        logger.info("Fetching reports");
-        Specification<Report> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
-        return reportRepository.findAll(spec, pageable).map(this::toDTO);
+        logger.info("Fetching all reports");
+        return reportRepository.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional
-    public ReportDTO generate(ReportGenerateDTO dto) {
-        logger.info("Generating report of type: {}", dto.getType());
-        Report report = new Report();
-        report.setType(dto.getType());
-        report.setGeneratedBy(getCurrentUserId());
-        report.setDateFrom(dto.getDateFrom());
-        report.setDateTo(dto.getDateTo());
+    public ReportDTO generate(ReportGenerateDTO generateDTO) {
+        logger.info("Generating report of type: {}", generateDTO.getType());
+        String data = switch (generateDTO.getType()) {
+            case "animal_summary" -> generateAnimalSummary(generateDTO);
+            case "financial_summary" -> generateFinancialSummary(generateDTO);
+            default -> throw new RuntimeException("Unsupported report type: " + generateDTO.getType());
+        };
+
+        com.livestock.backend.model.Report report = new com.livestock.backend.model.Report();
+        report.setType(generateDTO.getType());
+        report.setData(data);
         report.setCreatedAt(LocalDateTime.now());
-
-        // Generate data based on type
-        Object generatedData;
-        if ("animal_stats".equals(dto.getType())) {
-            generatedData = animalService.getStats();
-        } else if ("financial_summary".equals(dto.getType())) {
-            generatedData = financialRecordService.getSummary();
-        } else {
-            throw new RuntimeException("Unknown report type");
-        }
-
-        try {
-            report.setData(objectMapper.writeValueAsString(generatedData));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize report data");
-        }
-
         report = reportRepository.save(report);
         return toDTO(report);
     }
@@ -74,32 +59,38 @@ public class ReportService {
     @Transactional(readOnly = true)
     public ReportDTO getById(UUID id) {
         logger.info("Fetching report by ID: {}", id);
-        Report report = reportRepository.findById(id).orElseThrow(() -> new RuntimeException("Report not found"));
-        if (report.getDeletedAt() != null) throw new RuntimeException("Report deleted");
+        com.livestock.backend.model.Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
         return toDTO(report);
     }
 
-    @Transactional
-    public void softDelete(UUID id) {
-        logger.info("Soft deleting report: {}", id);
-        Report report = reportRepository.findById(id).orElseThrow(() -> new RuntimeException("Report not found"));
-        report.setDeletedAt(LocalDateTime.now());
-        reportRepository.save(report);
+    private String generateAnimalSummary(ReportGenerateDTO dto) {
+        Specification<Animal> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        if (dto.getEntityType() != null && dto.getEntityId() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get(dto.getEntityType()), UUID.fromString(dto.getEntityId())));
+        }
+        long count = animalRepository.count(spec);
+        return "{\"totalAnimals\": " + count + "}";
     }
 
-    private ReportDTO toDTO(Report report) {
+    private String generateFinancialSummary(ReportGenerateDTO dto) {
+        Specification<FinancialRecord> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        if (dto.getStartDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), dto.getStartDate()));
+        }
+        if (dto.getEndDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), dto.getEndDate()));
+        }
+        FinancialSummaryDTO summary = financialRecordRepository.getSummary();
+        return "{\"totalIncome\": " + summary.getTotalIncome() + ", \"totalExpense\": " + summary.getTotalExpense() + ", \"net\": " + summary.getNet() + "}";
+    }
+
+    private ReportDTO toDTO(com.livestock.backend.model.Report report) {
         ReportDTO dto = new ReportDTO();
         dto.setId(report.getId());
         dto.setType(report.getType());
-        dto.setGeneratedBy(report.getGeneratedBy());
-        dto.setDateFrom(report.getDateFrom());
-        dto.setDateTo(report.getDateTo());
         dto.setData(report.getData());
         dto.setCreatedAt(report.getCreatedAt());
         return dto;
-    }
-
-    private UUID getCurrentUserId() {
-        // same as above
     }
 }

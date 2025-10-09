@@ -1,6 +1,5 @@
 package com.livestock.backend.controller;
 
-
 import com.livestock.backend.dto.ReportDTO;
 import com.livestock.backend.dto.ReportGenerateDTO;
 import com.livestock.backend.dto.ApiResponse;
@@ -24,7 +23,7 @@ public class ReportController {
         return new ApiResponse<>(reportService.getAll(pageable), null);
     }
 
-    @PostMapping("/generate")
+    @PostMapping
     public ApiResponse<ReportDTO> generate(@Valid @RequestBody ReportGenerateDTO dto) {
         return new ApiResponse<>(reportService.generate(dto), null);
     }
@@ -32,11 +31,5 @@ public class ReportController {
     @GetMapping("/{id}")
     public ApiResponse<ReportDTO> get(@PathVariable UUID id) {
         return new ApiResponse<>(reportService.getById(id), null);
-    }
-
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        reportService.softDelete(id);
-        return new ApiResponse<>(null, null);
     }
 }
