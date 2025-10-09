@@ -1,68 +1,57 @@
 package com.livestock.backend.controller;
 
-
-
-import com.livestock.backend.dto.request.AnimalRequest;
-import com.livestock.backend.dto.response.AnimalResponse;
+import com.livestock.backend.dto.AnimalDTO;
+import com.livestock.backend.dto.AnimalStatsDTO;
+import com.livestock.backend.dto.AnimalWithOwnerDTO;
+import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.AnimalService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/animals")
 public class AnimalController {
-
-    private final AnimalService animalService;
-
-    public AnimalController(AnimalService animalService) {
-        this.animalService = animalService;
-    }
+    @Autowired
+    private AnimalService animalService;
 
     @GetMapping
-    public ResponseEntity<Page<AnimalResponse>> getAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+    public ApiResponse<Page<AnimalDTO>> list(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID ownerId,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(animalService.getAllAnimals(page, size, type, status, ownerId, search));
+            Pageable pageable) {
+        return new ApiResponse<>(animalService.getAll(type, status, ownerId, pageable), null);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AnimalResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(animalService.getAnimalById(id));
+    public ApiResponse<AnimalWithOwnerDTO> get(@PathVariable UUID id) {
+        return new ApiResponse<>(animalService.getById(id), null);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> create(@Valid @RequestBody AnimalRequest request) {
-        AnimalResponse response = animalService.createAnimal(request);
-        return ResponseEntity.ok(Map.of("id", response.getId(), "tagId", response.getTagId(), "message", "Animal created successfully"));
+    public ApiResponse<AnimalDTO> create(@Valid @RequestBody AnimalDTO dto) {
+        return new ApiResponse<>(animalService.create(dto), null);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable UUID id, @Valid @RequestBody AnimalRequest request) {
-        AnimalResponse response = animalService.updateAnimal(id, request);
-        return ResponseEntity.ok(Map.of("id", response.getId(), "message", "Animal updated successfully"));
+    public ApiResponse<AnimalDTO> update(@PathVariable UUID id, @Valid @RequestBody AnimalDTO dto) {
+        return new ApiResponse<>(animalService.update(id, dto), null);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable UUID id) {
-        animalService.deleteAnimal(id);
-        return ResponseEntity.ok(Map.of("message", "Animal deleted successfully"));
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
+        animalService.softDelete(id);
+        return new ApiResponse<>(null, null);
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getStats() {
-        return ResponseEntity.ok(animalService.getAnimalStats());
+    public ApiResponse<AnimalStatsDTO> stats() {
+        return new ApiResponse<>(animalService.getStats(), null);
     }
 }

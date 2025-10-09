@@ -1,59 +1,46 @@
 package com.livestock.backend.controller;
 
-
-
-import com.livestock.backend.dto.request.OwnerRequest;
-import com.livestock.backend.dto.response.OwnerResponse;
+import com.livestock.backend.dto.OwnerDTO;
+import com.livestock.backend.dto.OwnerWithAnimalCountDTO;
+import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.OwnerService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/owners")
 public class OwnerController {
-
-    private final OwnerService ownerService;
-
-    public OwnerController(OwnerService ownerService) {
-        this.ownerService = ownerService;
-    }
+    @Autowired
+    private OwnerService ownerService;
 
     @GetMapping
-    public ResponseEntity<Page<OwnerResponse>> getAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ownerService.getAllOwners(page, size));
+    public ApiResponse<Page<OwnerDTO>> list(Pageable pageable) {
+        return new ApiResponse<>(ownerService.getAll(pageable), null);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OwnerResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(ownerService.getOwnerById(id));
+    public ApiResponse<OwnerWithAnimalCountDTO> get(@PathVariable UUID id) {
+        return new ApiResponse<>(ownerService.getById(id), null);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> create(@Valid @RequestBody OwnerRequest request) {
-        OwnerResponse response = ownerService.createOwner(request);
-        return ResponseEntity.ok(Map.of("id", response.getId(), "message", "Owner created successfully"));
+    public ApiResponse<OwnerDTO> create(@Valid @RequestBody OwnerDTO dto) {
+        return new ApiResponse<>(ownerService.create(dto), null);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
-        OwnerResponse response = ownerService.updateOwner(id, request);
-        return ResponseEntity.ok(Map.of("id", response.getId(), "message", "Owner updated successfully"));
+    public ApiResponse<OwnerDTO> update(@PathVariable UUID id, @Valid @RequestBody OwnerDTO dto) {
+        return new ApiResponse<>(ownerService.update(id, dto), null);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable UUID id) {
-        ownerService.deleteOwner(id);
-        return ResponseEntity.ok(Map.of("message", "Owner deleted successfully"));
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
+        ownerService.softDelete(id);
+        return new ApiResponse<>(null, null);
     }
 }
