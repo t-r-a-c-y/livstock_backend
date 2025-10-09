@@ -4,6 +4,7 @@ import com.livestock.backend.dto.FinancialRecordDTO;
 import com.livestock.backend.dto.FinancialSummaryDTO;
 import com.livestock.backend.model.FinancialRecord;
 import com.livestock.backend.repository.FinancialRecordRepository;
+import com.livestock.backend.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

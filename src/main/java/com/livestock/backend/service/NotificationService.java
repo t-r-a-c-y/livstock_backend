@@ -3,6 +3,7 @@ package com.livestock.backend.service;
 import com.livestock.backend.dto.NotificationDTO;
 import com.livestock.backend.model.Notification;
 import com.livestock.backend.repository.NotificationRepository;
+import com.livestock.backend.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

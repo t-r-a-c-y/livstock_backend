@@ -3,32 +3,29 @@ package com.livestock.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "notifications")
 @Data
 public class Notification {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
     private UUID id;
 
-    private String title;
-    private String message;
+    @Column(nullable = false)
     private String type;
-    private String category;
-    private String priority;
-    private Boolean isRead = false;
-    private Boolean actionRequired;
-    private String relatedEntityType;
-    private UUID relatedEntityId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UserProfile user;
+    @Column(nullable = false)
+    private String message;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt = new Date();
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead;
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

@@ -1,9 +1,7 @@
 package com.livestock.backend.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,26 +13,19 @@ import java.util.UUID;
 @Data
 public class FinancialRecord {
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @GeneratedValue
     private UUID id;
 
+    @Column(nullable = false)
     private String type;
 
-    private LocalDate date;
-
+    @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(nullable = false)
+    private LocalDate date;
+
     private String description;
-
-    @Column(name = "payment_method")
-    private String paymentMethod;
-
-    @Column(name = "receipt_number")
-    private String receiptNumber;
-
-    @Column(name = "receipt_image")
-    private String receiptImage;
 
     @Column(name = "activity_id")
     private UUID activityId;

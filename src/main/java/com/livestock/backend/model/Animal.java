@@ -1,9 +1,7 @@
 package com.livestock.backend.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,25 +13,28 @@ import java.util.UUID;
 @Data
 public class Animal {
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @GeneratedValue
     private UUID id;
 
-    @Column(name = "tag_id", unique = true)
+    @Column(name = "tag_id", nullable = false, unique = true)
     private String tagId;
 
+    @Column(nullable = false)
     private String type;
 
+    @Column(nullable = false)
     private String breed;
 
+    @Column(nullable = false)
     private String gender;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
-    @Column(name = "owner_id")
+    @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
+    @Column(nullable = false)
     private String status;
 
     @Column(name = "milk_production")

@@ -1,12 +1,8 @@
 package com.livestock.backend.model;
 
-
-
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.GenericGenerator;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,27 +11,15 @@ import java.util.UUID;
 @Data
 public class Report {
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @GeneratedValue
     private UUID id;
 
+    @Column(nullable = false)
     private String type;
 
-    @Column(name = "generated_by")
-    private UUID generatedBy;
-
-    @Column(name = "date_from")
-    private LocalDate dateFrom;
-
-    @Column(name = "date_to")
-    private LocalDate dateTo;
-
-    @Column(columnDefinition = "jsonb")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String data;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 }
