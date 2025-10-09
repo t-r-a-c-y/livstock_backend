@@ -1,7 +1,7 @@
 package com.livestock.backend.service;
 
 import com.livestock.backend.dto.UserCreateDTO;
-import com.livestock.backend..dto.UserDTO;
+import com.livestock.backend.dto.UserDTO;
 import com.livestock.backend.model.AuthUser;
 import com.livestock.backend.model.Profile;
 import com.livestock.backend.model.UserRole;
