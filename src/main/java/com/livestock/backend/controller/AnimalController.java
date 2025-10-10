@@ -1,11 +1,7 @@
 package com.livestock.backend.controller;
 
 import com.livestock.backend.dto.AnimalDTO;
-import com.livestock.backend.dto.AnimalStatsDTO;
-import com.livestock.backend.dto.AnimalWithOwnerDTO;
-import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.AnimalService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,41 +13,91 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/animals")
 public class AnimalController {
+
     @Autowired
     private AnimalService animalService;
 
     @GetMapping
-    public ApiResponse<Page<AnimalDTO>> list(
+    public ResponseEntity<?> getAnimals(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID ownerId,
             Pageable pageable) {
-        return new ApiResponse<>(animalService.getAll(type, status, ownerId, pageable), null);
+        try {
+            Page<AnimalDTO> animals = animalService.getAll(type, status, ownerId, pageable);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(animals, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<AnimalWithOwnerDTO> get(@PathVariable UUID id) {
-        return new ApiResponse<>(animalService.getById(id), null);
+    public ResponseEntity<?> getAnimal(@PathVariable UUID id) {
+        try {
+            AnimalDTO animal = animalService.getById(id);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(animal, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @PostMapping
-    public ApiResponse<AnimalDTO> create(@Valid @RequestBody AnimalDTO dto) {
-        return new ApiResponse<>(animalService.create(dto), null);
+    public ResponseEntity<?> createAnimal(@RequestBody AnimalDTO dto) {
+        try {
+            AnimalDTO created = animalService.create(dto);
+            return ResponseEntity.status(201).body(new ResponseWrapper<>(created, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<AnimalDTO> update(@PathVariable UUID id, @Valid @RequestBody AnimalDTO dto) {
-        return new ApiResponse<>(animalService.update(id, dto), null);
+    public ResponseEntity<?> updateAnimal(@PathVariable UUID id, @RequestBody AnimalDTO dto) {
+        try {
+            AnimalDTO updated = animalService.update(id, dto);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(updated, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        animalService.softDelete(id);
-        return new ApiResponse<>(null, null);
+    public ResponseEntity<?> deleteAnimal(@PathVariable UUID id) {
+        try {
+            animalService.delete(id);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(null, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
-    @GetMapping("/stats")
-    public ApiResponse<AnimalStatsDTO> stats() {
-        return new ApiResponse<>(animalService.getStats(), null);
+    private static class ResponseWrapper<T> {
+        private final T data;
+        private final ErrorResponse error;
+
+        public ResponseWrapper(T data, ErrorResponse error) {
+            this.data = data;
+            this.error = error;
+        }
+
+        public T getData() {
+            return data;
+        }
+
+        public ErrorResponse getError() {
+            return error;
+        }
+    }
+
+    private static class ErrorResponse {
+        private final String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }

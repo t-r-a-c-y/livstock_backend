@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -43,17 +44,38 @@ public class NotificationService {
             throw new RuntimeException("Unauthorized access to notification");
         }
         notification.setIsRead(true);
+        notification.setReadAt(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        logger.info("Soft deleting notification with id: {}", id);
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (!notification.getUserId().equals(getCurrentUserId())) {
+            throw new RuntimeException("Unauthorized access to notification");
+        }
+        notification.setDeletedAt(LocalDateTime.now());
         notificationRepository.save(notification);
     }
 
     private NotificationDTO toDTO(Notification notification) {
         NotificationDTO dto = new NotificationDTO();
         dto.setId(notification.getId());
-        dto.setType(notification.getType());
+        dto.setTitle(notification.getTitle());
         dto.setMessage(notification.getMessage());
+        dto.setType(notification.getType());
+        dto.setPriority(notification.getPriority());
+        dto.setCategory(notification.getCategory());
         dto.setIsRead(notification.getIsRead());
+        dto.setActionRequired(notification.isActionRequired());
+        dto.setRelatedEntityId(notification.getRelatedEntityId());
+        dto.setRelatedEntityType(notification.getRelatedEntityType());
         dto.setUserId(notification.getUserId());
         dto.setCreatedAt(notification.getCreatedAt());
+        dto.setReadAt(notification.getReadAt());
+        dto.setDeletedAt(notification.getDeletedAt());
         return dto;
     }
 

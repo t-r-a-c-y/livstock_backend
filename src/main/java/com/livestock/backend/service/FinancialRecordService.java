@@ -4,15 +4,12 @@ import com.livestock.backend.dto.FinancialRecordDTO;
 import com.livestock.backend.dto.FinancialSummaryDTO;
 import com.livestock.backend.model.FinancialRecord;
 import com.livestock.backend.repository.FinancialRecordRepository;
-import com.livestock.backend.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,30 +25,38 @@ public class FinancialRecordService {
     private FinancialRecordRepository financialRecordRepository;
 
     @Transactional(readOnly = true)
-    public Page<FinancialRecordDTO> getAll(String type, LocalDate startDate, LocalDate endDate, UUID activityId, Pageable pageable) {
-        logger.info("Fetching financial records with filters");
+    public Page<FinancialRecordDTO> getAll(String type, LocalDate dateFrom, LocalDate dateTo, UUID animalId, Pageable pageable) {
+        logger.info("Fetching financial records with type: {}, dateFrom: {}, dateTo: {}, animalId: {}", type, dateFrom, dateTo, animalId);
         Specification<FinancialRecord> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
-        if (type != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
-        if (activityId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("activityId"), activityId));
-        if (startDate != null) spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), startDate));
-        if (endDate != null) spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), endDate));
+        if (type != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
+        }
+        if (dateFrom != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), dateFrom));
+        }
+        if (dateTo != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), dateTo));
+        }
+        if (animalId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("animalId"), animalId));
+        }
         return financialRecordRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
     public FinancialRecordDTO getById(UUID id) {
-        logger.info("Fetching financial record by ID: {}", id);
-        FinancialRecord record = financialRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Financial record not found"));
-        if (record.getDeletedAt() != null) throw new RuntimeException("Financial record deleted");
+        logger.info("Fetching financial record with id: {}", id);
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Financial record not found"));
         return toDTO(record);
     }
 
     @Transactional
     public FinancialRecordDTO create(FinancialRecordDTO dto) {
-        logger.info("Creating financial record: {}", dto.getType());
+        logger.info("Creating financial record with type: {}", dto.getType());
         FinancialRecord record = new FinancialRecord();
-        mapToEntity(dto, record);
-        record.setCreatedBy(getCurrentUserId());
+        updateEntityFromDTO(record, dto);
         record.setCreatedAt(LocalDateTime.now());
         record.setUpdatedAt(LocalDateTime.now());
         record = financialRecordRepository.save(record);
@@ -60,19 +65,22 @@ public class FinancialRecordService {
 
     @Transactional
     public FinancialRecordDTO update(UUID id, FinancialRecordDTO dto) {
-        logger.info("Updating financial record: {}", id);
-        FinancialRecord record = financialRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Financial record not found"));
-        if (record.getDeletedAt() != null) throw new RuntimeException("Financial record deleted");
-        mapToEntity(dto, record);
+        logger.info("Updating financial record with id: {}", id);
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Financial record not found"));
+        updateEntityFromDTO(record, dto);
         record.setUpdatedAt(LocalDateTime.now());
         record = financialRecordRepository.save(record);
         return toDTO(record);
     }
 
     @Transactional
-    public void softDelete(UUID id) {
-        logger.info("Soft deleting financial record: {}", id);
-        FinancialRecord record = financialRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Financial record not found"));
+    public void delete(UUID id) {
+        logger.info("Soft deleting financial record with id: {}", id);
+        FinancialRecord record = financialRecordRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Financial record not found"));
         record.setDeletedAt(LocalDateTime.now());
         financialRecordRepository.save(record);
     }
@@ -80,36 +88,55 @@ public class FinancialRecordService {
     @Transactional(readOnly = true)
     public FinancialSummaryDTO getSummary() {
         logger.info("Fetching financial summary");
-        return financialRecordRepository.getSummary();
+        double income = financialRecordRepository.findAll()
+                .stream()
+                .filter(r -> r.getDeletedAt() == null && "income".equals(r.getType()))
+                .mapToDouble(FinancialRecord::getAmount)
+                .sum();
+        double expense = financialRecordRepository.findAll()
+                .stream()
+                .filter(r -> r.getDeletedAt() == null && "expense".equals(r.getType()))
+                .mapToDouble(FinancialRecord::getAmount)
+                .sum();
+        FinancialSummaryDTO summary = new FinancialSummaryDTO();
+        summary.setIncome(income);
+        summary.setExpense(expense);
+        return summary;
     }
 
     private FinancialRecordDTO toDTO(FinancialRecord record) {
         FinancialRecordDTO dto = new FinancialRecordDTO();
         dto.setId(record.getId());
         dto.setType(record.getType());
+        dto.setCategory(record.getCategory());
         dto.setAmount(record.getAmount());
-        dto.setDate(record.getDate());
         dto.setDescription(record.getDescription());
+        dto.setDate(record.getDate());
+        dto.setOwnerId(record.getOwnerId());
+        dto.setAnimalId(record.getAnimalId());
         dto.setActivityId(record.getActivityId());
+        dto.setPaymentMethod(record.getPaymentMethod());
+        dto.setReceiptNumber(record.getReceiptNumber());
+        dto.setReceiptImage(record.getReceiptImage());
         dto.setCreatedBy(record.getCreatedBy());
         dto.setCreatedAt(record.getCreatedAt());
         dto.setUpdatedAt(record.getUpdatedAt());
+        dto.setDeletedAt(record.getDeletedAt());
         return dto;
     }
 
-    private void mapToEntity(FinancialRecordDTO dto, FinancialRecord record) {
+    private void updateEntityFromDTO(FinancialRecord record, FinancialRecordDTO dto) {
         record.setType(dto.getType());
+        record.setCategory(dto.getCategory());
         record.setAmount(dto.getAmount());
-        record.setDate(dto.getDate());
         record.setDescription(dto.getDescription());
+        record.setDate(dto.getDate());
+        record.setOwnerId(dto.getOwnerId());
+        record.setAnimalId(dto.getAnimalId());
         record.setActivityId(dto.getActivityId());
-    }
-
-    private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof UserPrincipal principal) {
-            return principal.getId();
-        }
-        throw new RuntimeException("No authenticated user");
+        record.setPaymentMethod(dto.getPaymentMethod());
+        record.setReceiptNumber(dto.getReceiptNumber());
+        record.setReceiptImage(dto.getReceiptImage());
+        record.setCreatedBy(dto.getCreatedBy());
     }
 }

@@ -10,14 +10,24 @@ import java.util.UUID;
 public class NotificationDTO {
     private UUID id;
     @NotBlank
-    private String type;
+    private String title;
     @NotBlank
     private String message;
+    @NotBlank
+    private String type;
+    @NotBlank
+    private String priority;
+    @NotBlank
+    private String category;
     private boolean isRead;
+    private boolean actionRequired;
+    private UUID relatedEntityId;
+    private String relatedEntityType;
     private UUID userId;
     private LocalDateTime createdAt;
+    private LocalDateTime readAt;
+    private LocalDateTime deletedAt;
 
-    // Explicit getters and setters for isRead to avoid Lombok issues
     public boolean getIsRead() {
         return isRead;
     }

@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,12 +13,18 @@ public class FinancialRecordDTO {
     private UUID id;
     @NotBlank
     private String type;
+    private String category;
     @NotNull
-    private BigDecimal amount;
+    private Double amount;
+    private String description;
     @NotNull
     private LocalDate date;
-    private String description;
+    private UUID ownerId;
+    private UUID animalId;
     private UUID activityId;
+    private String paymentMethod;
+    private String receiptNumber;
+    private String receiptImage;
     private UUID createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

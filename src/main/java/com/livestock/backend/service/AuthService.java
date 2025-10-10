@@ -1,10 +1,11 @@
 package com.livestock.backend.service;
 
-import com.livestock.backend.dto.JwtResponse;
-import com.livestock.backend.dto.LoginRequest;
-import com.livestock.backend.dto.RegisterRequest;
-import com.livestock.backend.model.AuthUser;
-import com.livestock.backend.repository.AuthUserRepository;
+import com.livestock.backend.dto.AuthRequestDTO;
+import com.livestock.backend.dto.AuthResponseDTO;
+import com.livestock.backend.model.Profile;
+import com.livestock.backend.model.UserRole;
+import com.livestock.backend.repository.ProfileRepository;
+import com.livestock.backend.repository.UserRoleRepository;
 import com.livestock.backend.security.JwtTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,48 +28,57 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private AuthUserRepository authUserRepository;
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private ProfileRepository profileRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
     @Transactional
-    public JwtResponse login(LoginRequest loginRequest) {
-        logger.info("Processing login for user: {}", loginRequest.getEmail());
+    public AuthResponseDTO login(AuthRequestDTO authRequest) {
+        logger.info("Attempting login for user: {}", authRequest.getEmail());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-        );
-        AuthUser user = authUserRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        if (user.getDeletedAt() != null) {
-            throw new RuntimeException("User account is deleted");
-        }
-        String jwt = tokenProvider.generateToken(authentication);
-        JwtResponse response = new JwtResponse();
-        response.setToken(jwt);
-        response.setId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setName(user.getName());
-        response.setRole(user.getRole());
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+        String token = jwtTokenProvider.generateToken(authentication);
+        AuthResponseDTO response = new AuthResponseDTO();
+        response.setToken(token);
+        response.setRefreshToken("refresh-" + UUID.randomUUID()); // Simplified refresh token
         return response;
     }
 
     @Transactional
-    public void register(RegisterRequest registerRequest) {
-        logger.info("Registering new user: {}", registerRequest.getEmail());
-        if (authUserRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+    public AuthResponseDTO register(AuthRequestDTO authRequest) {
+        logger.info("Registering new user: {}", authRequest.getEmail());
+        if (profileRepository.findAll().stream().anyMatch(p -> authRequest.getEmail().equals(p.getName()))) {
             throw new RuntimeException("Email already exists");
         }
-        AuthUser user = new AuthUser();
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setName(registerRequest.getName());
-        user.setRole(registerRequest.getRole());
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        authUserRepository.save(user);
+
+        Profile profile = new Profile();
+        profile.setId(UUID.randomUUID());
+        profile.setName(authRequest.getName());
+        profile.setPhone(null);
+        profile.setAvatar(null);
+        profile.setCreatedAt(LocalDateTime.now());
+        profile.setUpdatedAt(LocalDateTime.now());
+        profileRepository.save(profile);
+
+        UserRole role = new UserRole();
+        role.setUserId(profile.getId());
+        role.setRole(authRequest.getRole() != null ? authRequest.getRole() : "USER");
+        role.setCreatedAt(LocalDateTime.now());
+        userRoleRepository.save(role);
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+        String token = jwtTokenProvider.generateToken(authentication);
+        AuthResponseDTO response = new AuthResponseDTO();
+        response.setToken(token);
+        response.setRefreshToken("refresh-" + UUID.randomUUID());
+        return response;
     }
 }

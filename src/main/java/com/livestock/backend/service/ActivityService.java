@@ -1,23 +1,21 @@
 package com.livestock.backend.service;
 
 import com.livestock.backend.dto.ActivityDTO;
+import com.livestock.backend.dto.FinancialRecordDTO;
 import com.livestock.backend.model.Activity;
 import com.livestock.backend.model.FinancialRecord;
 import com.livestock.backend.repository.ActivityRepository;
 import com.livestock.backend.repository.FinancialRecordRepository;
-import com.livestock.backend.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -32,57 +30,51 @@ public class ActivityService {
     private FinancialRecordRepository financialRecordRepository;
 
     @Transactional(readOnly = true)
-    public Page<ActivityDTO> getAll(String type, LocalDateTime startDate, LocalDateTime endDate, UUID animalId, Pageable pageable) {
-        logger.info("Fetching activities with filters");
+    public Page<ActivityDTO> getAll(String type, LocalDate dateFrom, LocalDate dateTo, UUID animalId, Pageable pageable) {
+        logger.info("Fetching activities with type: {}, dateFrom: {}, dateTo: {}, animalId: {}", type, dateFrom, dateTo, animalId);
         Specification<Activity> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
-        if (type != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
-        if (animalId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("animalId"), animalId));
-        if (startDate != null) spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), startDate));
-        if (endDate != null) spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), endDate));
+        if (type != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("type"), type));
+        }
+        if (dateFrom != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), dateFrom));
+        }
+        if (dateTo != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), dateTo));
+        }
+        if (animalId != null) {
+            spec = spec.and((root, query, cb) -> cb.isMember(animalId, root.get("animalIds")));
+        }
         return activityRepository.findAll(spec, pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
     public ActivityDTO getById(UUID id) {
-        logger.info("Fetching activity by ID: {}", id);
-        Activity activity = activityRepository.findById(id).orElseThrow(() -> new RuntimeException("Activity not found"));
-        if (activity.getDeletedAt() != null) throw new RuntimeException("Activity deleted");
+        logger.info("Fetching activity with id: {}", id);
+        Activity activity = activityRepository.findById(id)
+                .filter(a -> a.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
         return toDTO(activity);
     }
 
     @Transactional
     public ActivityDTO create(ActivityDTO dto) {
-        logger.info("Creating activity: {}", dto.getType());
+        logger.info("Creating activity with type: {}", dto.getType());
         Activity activity = new Activity();
-        mapToEntity(dto, activity);
+        updateEntityFromDTO(activity, dto);
         activity.setCreatedAt(LocalDateTime.now());
-        activity.setUpdatedAt(LocalDateTime.now());
         activity = activityRepository.save(activity);
 
-        // Auto-create financial record
-        if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
-            FinancialRecord fr = new FinancialRecord();
-            fr.setType("expense");
-            fr.setAmount(dto.getCost());
-            fr.setDate(activity.getDate().toLocalDate());
-            fr.setDescription("Cost for activity " + activity.getId());
-            fr.setActivityId(activity.getId());
-            fr.setCreatedBy(getCurrentUserId());
-            fr.setCreatedAt(LocalDateTime.now());
-            fr.setUpdatedAt(LocalDateTime.now());
-            financialRecordRepository.save(fr);
-        }
-        if (dto.getAmount() != null && dto.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-            FinancialRecord fr = new FinancialRecord();
-            fr.setType("income");
-            fr.setAmount(dto.getAmount());
-            fr.setDate(activity.getDate().toLocalDate());
-            fr.setDescription("Income from activity " + activity.getId());
-            fr.setActivityId(activity.getId());
-            fr.setCreatedBy(getCurrentUserId());
-            fr.setCreatedAt(LocalDateTime.now());
-            fr.setUpdatedAt(LocalDateTime.now());
-            financialRecordRepository.save(fr);
+        if (dto.getAmount() != null || dto.getCost() != null) {
+            FinancialRecordDTO financialRecordDTO = new FinancialRecordDTO();
+            financialRecordDTO.setType(dto.getAmount() != null ? "income" : "expense");
+            financialRecordDTO.setAmount(dto.getAmount() != null ? dto.getAmount() : dto.getCost());
+            financialRecordDTO.setDescription(dto.getDescription());
+            financialRecordDTO.setDate(dto.getDate());
+            financialRecordDTO.setCreatedBy(dto.getCreatedBy());
+            financialRecordDTO.setCreatedAt(LocalDateTime.now());
+            financialRecordDTO.setUpdatedAt(LocalDateTime.now());
+            financialRecordRepository.save(toFinancialRecordEntity(financialRecordDTO));
         }
 
         return toDTO(activity);
@@ -90,20 +82,21 @@ public class ActivityService {
 
     @Transactional
     public ActivityDTO update(UUID id, ActivityDTO dto) {
-        logger.info("Updating activity: {}", id);
-        Activity activity = activityRepository.findById(id).orElseThrow(() -> new RuntimeException("Activity not found"));
-        if (activity.getDeletedAt() != null) throw new RuntimeException("Activity deleted");
-        mapToEntity(dto, activity);
-        activity.setUpdatedAt(LocalDateTime.now());
+        logger.info("Updating activity with id: {}", id);
+        Activity activity = activityRepository.findById(id)
+                .filter(a -> a.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+        updateEntityFromDTO(activity, dto);
         activity = activityRepository.save(activity);
-        // Note: No auto-update for financial, assume manual
         return toDTO(activity);
     }
 
     @Transactional
-    public void softDelete(UUID id) {
-        logger.info("Soft deleting activity: {}", id);
-        Activity activity = activityRepository.findById(id).orElseThrow(() -> new RuntimeException("Activity not found"));
+    public void delete(UUID id) {
+        logger.info("Soft deleting activity with id: {}", id);
+        Activity activity = activityRepository.findById(id)
+                .filter(a -> a.getDeletedAt() == null)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
         activity.setDeletedAt(LocalDateTime.now());
         activityRepository.save(activity);
     }
@@ -111,31 +104,45 @@ public class ActivityService {
     private ActivityDTO toDTO(Activity activity) {
         ActivityDTO dto = new ActivityDTO();
         dto.setId(activity.getId());
+        dto.setAnimalIds(activity.getAnimalIds());
         dto.setType(activity.getType());
-        dto.setDate(activity.getDate());
-        dto.setAnimalId(activity.getAnimalId());
         dto.setDescription(activity.getDescription());
-        dto.setCost(activity.getCost());
+        dto.setDate(activity.getDate());
         dto.setAmount(activity.getAmount());
+        dto.setCost(activity.getCost());
+        dto.setNotes(activity.getNotes());
+        dto.setCreatedBy(activity.getCreatedBy());
         dto.setCreatedAt(activity.getCreatedAt());
-        dto.setUpdatedAt(activity.getUpdatedAt());
+        dto.setDeletedAt(activity.getDeletedAt());
         return dto;
     }
 
-    private void mapToEntity(ActivityDTO dto, Activity activity) {
+    private void updateEntityFromDTO(Activity activity, ActivityDTO dto) {
+        activity.setAnimalIds(dto.getAnimalIds());
         activity.setType(dto.getType());
-        activity.setDate(dto.getDate());
-        activity.setAnimalId(dto.getAnimalId());
         activity.setDescription(dto.getDescription());
-        activity.setCost(dto.getCost());
+        activity.setDate(dto.getDate());
         activity.setAmount(dto.getAmount());
+        activity.setCost(dto.getCost());
+        activity.setNotes(dto.getNotes());
+        activity.setCreatedBy(dto.getCreatedBy());
     }
 
-    private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getPrincipal() instanceof UserPrincipal principal) {
-            return principal.getId();
-        }
-        throw new RuntimeException("No authenticated user");
+    private FinancialRecord toFinancialRecordEntity(FinancialRecordDTO dto) {
+        FinancialRecord entity = new FinancialRecord();
+        entity.setType(dto.getType());
+        entity.setCategory(dto.getCategory());
+        entity.setAmount(dto.getAmount());
+        entity.setDescription(dto.getDescription());
+        entity.setDate(dto.getDate());
+        entity.setOwnerId(dto.getOwnerId());
+        entity.setAnimalId(dto.getAnimalId());
+        entity.setPaymentMethod(dto.getPaymentMethod());
+        entity.setReceiptNumber(dto.getReceiptNumber());
+        entity.setReceiptImage(dto.getReceiptImage());
+        entity.setCreatedBy(dto.getCreatedBy());
+        entity.setCreatedAt(dto.getCreatedAt());
+        entity.setUpdatedAt(dto.getUpdatedAt());
+        return entity;
     }
 }

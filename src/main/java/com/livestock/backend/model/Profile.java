@@ -1,6 +1,5 @@
 package com.livestock.backend.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,15 +11,19 @@ import java.util.UUID;
 @Data
 public class Profile {
     @Id
-    private UUID id;  // Matches auth.users.id, not generated
+    private UUID id;
 
-    private String username;
+    @Column
+    private String name;
 
-    @Column(name = "full_name")
-    private String fullName;
+    @Column
+    private String phone;
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+    @Column
+    private String avatar;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

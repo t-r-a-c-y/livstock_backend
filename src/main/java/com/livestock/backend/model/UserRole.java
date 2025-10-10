@@ -3,6 +3,7 @@ package com.livestock.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -18,4 +19,7 @@ public class UserRole {
 
     @Column(nullable = false)
     private String role;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

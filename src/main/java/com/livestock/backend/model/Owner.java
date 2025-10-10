@@ -14,13 +14,20 @@ public class Owner {
     @GeneratedValue
     private UUID id;
 
+    @Column(nullable = false)
     private String name;
 
-    private String phone;
-
+    @Column
     private String email;
 
+    @Column
+    private String phone;
+
+    @Column
     private String address;
+
+    @Column
+    private String avatar;
 
     @Column(name = "national_id")
     private String nationalId;
@@ -30,6 +37,9 @@ public class Owner {
 
     @Column(name = "emergency_contact")
     private String emergencyContact;
+
+    @Column
+    private String notes;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

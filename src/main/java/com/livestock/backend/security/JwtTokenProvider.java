@@ -1,20 +1,13 @@
 package com.livestock.backend.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.InvalidKeyException;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.UUID;
-import javax.crypto.SecretKey;
 
 @Component
 public class JwtTokenProvider {
@@ -23,56 +16,46 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:86400000}")
-    private long jwtExpirationInMs;
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
 
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public String generateToken(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-
+    public String generateToken(UserPrincipal userPrincipal) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getEmail())
+                .setSubject(userPrincipal.getUsername())
                 .claim("id", userPrincipal.getId().toString())
+                .claim("email", userPrincipal.getEmail())
                 .claim("name", userPrincipal.getName())
-                .claim("role", userPrincipal.getAuthorities().iterator().next().getAuthority())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
-    public UUID getUserIdFromJWT(String token) {
+    public String getUsernameFromJWT(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
-                .parseClaimsJws(token)
-                .getBody();
-        return UUID.fromString(claims.get("id", String.class));
-    }
-
-    public String getEmailFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(jwtSecret)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
     }
 
-    public boolean validateToken(String authToken) {
+    public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .parseClaimsJws(authToken);
+            Jwts.parser().setSigningKey(jwtSecret).build().parseClaimsJws(token);
             return true;
-        } catch (Exception ex) {
-            logger.error("Invalid JWT token: {}", ex.getMessage());
-            return false;
+        } catch (MalformedJwtException e) {
+            logger.error("Invalid JWT token: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            logger.error("JWT token is expired: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            logger.error("JWT token is unsupported: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            logger.error("JWT claims string is empty: {}", e.getMessage());
         }
+        return false;
     }
 }

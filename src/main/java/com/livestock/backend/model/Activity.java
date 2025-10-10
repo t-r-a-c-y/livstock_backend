@@ -3,7 +3,7 @@ package com.livestock.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,26 +15,32 @@ public class Activity {
     @GeneratedValue
     private UUID id;
 
+    @Column(name = "animal_ids")
+    private UUID[] animalIds;
+
     @Column(nullable = false)
     private String type;
 
-    @Column(nullable = false)
-    private LocalDateTime date;
-
-    @Column(name = "animal_id", nullable = false)
-    private UUID animalId;
-
+    @Column
     private String description;
 
-    private BigDecimal cost;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    private BigDecimal amount;
+    @Column
+    private Double amount;
+
+    @Column
+    private Double cost;
+
+    @Column
+    private String notes;
+
+    @Column(name = "created_by")
+    private UUID createdBy;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

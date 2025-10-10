@@ -1,6 +1,5 @@
 package com.livestock.backend.repository;
 
-
 import com.livestock.backend.model.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 

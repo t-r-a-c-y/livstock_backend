@@ -1,13 +1,11 @@
 package com.livestock.backend.controller;
 
 import com.livestock.backend.dto.OwnerDTO;
-import com.livestock.backend.dto.OwnerWithAnimalCountDTO;
-import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.service.OwnerService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -15,34 +13,87 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/owners")
 public class OwnerController {
+
     @Autowired
     private OwnerService ownerService;
 
     @GetMapping
-    public ApiResponse<Page<OwnerWithAnimalCountDTO>> list(
-            @RequestParam(required = false) String name,
-            Pageable pageable) {
-        return new ApiResponse<>(ownerService.getAll(name, pageable), null);
+    public ResponseEntity<?> getOwners(Pageable pageable) {
+        try {
+            Page<OwnerDTO> owners = ownerService.getAll(pageable);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(owners, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<OwnerDTO> get(@PathVariable UUID id) {
-        return new ApiResponse<>(ownerService.getById(id), null);
+    public ResponseEntity<?> getOwner(@PathVariable UUID id) {
+        try {
+            OwnerDTO owner = ownerService.getById(id);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(owner, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @PostMapping
-    public ApiResponse<OwnerDTO> create(@Valid @RequestBody OwnerDTO dto) {
-        return new ApiResponse<>(ownerService.create(dto), null);
+    public ResponseEntity<?> createOwner(@RequestBody OwnerDTO dto) {
+        try {
+            OwnerDTO created = ownerService.create(dto);
+            return ResponseEntity.status(201).body(new ResponseWrapper<>(created, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<OwnerDTO> update(@PathVariable UUID id, @Valid @RequestBody OwnerDTO dto) {
-        return new ApiResponse<>(ownerService.update(id, dto), null);
+    public ResponseEntity<?> updateOwner(@PathVariable UUID id, @RequestBody OwnerDTO dto) {
+        try {
+            OwnerDTO updated = ownerService.update(id, dto);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(updated, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        ownerService.softDelete(id);
-        return new ApiResponse<>(null, null);
+    public ResponseEntity<?> deleteOwner(@PathVariable UUID id) {
+        try {
+            ownerService.delete(id);
+            return ResponseEntity.ok().body(new ResponseWrapper<>(null, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
+        }
+    }
+
+    private static class ResponseWrapper<T> {
+        private final T data;
+        private final ErrorResponse error;
+
+        public ResponseWrapper(T data, ErrorResponse error) {
+            this.data = data;
+            this.error = error;
+        }
+
+        public T getData() {
+            return data;
+        }
+
+        public ErrorResponse getError() {
+            return error;
+        }
+    }
+
+    private static class ErrorResponse {
+        private final String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }

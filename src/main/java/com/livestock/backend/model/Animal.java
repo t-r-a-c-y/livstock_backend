@@ -3,7 +3,6 @@ package com.livestock.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,16 +37,18 @@ public class Animal {
     private String status;
 
     @Column(name = "milk_production")
-    private BigDecimal milkProduction;
+    private Double milkProduction;
 
+    @Column
     private String photo;
 
     @Column(name = "parent_id")
     private UUID parentId;
 
     @Column(name = "sale_price")
-    private BigDecimal salePrice;
+    private Double salePrice;
 
+    @Column
     private String notes;
 
     @Column(name = "created_at")

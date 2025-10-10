@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "auth_users")
+@Table(name = "users")
 @Data
-public class AuthUser {
+public class User {
     @Id
     @GeneratedValue
     private UUID id;

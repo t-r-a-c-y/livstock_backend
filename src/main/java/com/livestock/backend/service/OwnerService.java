@@ -1,16 +1,13 @@
 package com.livestock.backend.service;
 
 import com.livestock.backend.dto.OwnerDTO;
-import com.livestock.backend.dto.OwnerWithAnimalCountDTO;
 import com.livestock.backend.model.Owner;
-import com.livestock.backend.repository.AnimalRepository;
 import com.livestock.backend.repository.OwnerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,32 +21,25 @@ public class OwnerService {
     @Autowired
     private OwnerRepository ownerRepository;
 
-    @Autowired
-    private AnimalRepository animalRepository;
-
     @Transactional(readOnly = true)
-    public Page<OwnerWithAnimalCountDTO> getAll(String name, Pageable pageable) {
-        logger.info("Fetching owners with name filter: {}", name);
-        Specification<Owner> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
-        if (name != null) {
-            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
-        }
-        return ownerRepository.findAll(spec, pageable).map(this::toDTOWithCount);
+    public Page<OwnerDTO> getAll(Pageable pageable) {
+        logger.info("Fetching all owners");
+        return ownerRepository.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
     public OwnerDTO getById(UUID id) {
-        logger.info("Fetching owner by ID: {}", id);
-        Owner owner = ownerRepository.findById(id).orElseThrow(() -> new RuntimeException("Owner not found"));
-        if (owner.getDeletedAt() != null) throw new RuntimeException("Owner deleted");
+        logger.info("Fetching owner with id: {}", id);
+        Owner owner = ownerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
         return toDTO(owner);
     }
 
     @Transactional
     public OwnerDTO create(OwnerDTO dto) {
-        logger.info("Creating owner: {}", dto.getName());
+        logger.info("Creating owner with name: {}", dto.getName());
         Owner owner = new Owner();
-        mapToEntity(dto, owner);
+        updateEntityFromDTO(owner, dto);
         owner.setCreatedAt(LocalDateTime.now());
         owner.setUpdatedAt(LocalDateTime.now());
         owner = ownerRepository.save(owner);
@@ -58,22 +48,20 @@ public class OwnerService {
 
     @Transactional
     public OwnerDTO update(UUID id, OwnerDTO dto) {
-        logger.info("Updating owner: {}", id);
-        Owner owner = ownerRepository.findById(id).orElseThrow(() -> new RuntimeException("Owner not found"));
-        if (owner.getDeletedAt() != null) throw new RuntimeException("Owner deleted");
-        mapToEntity(dto, owner);
+        logger.info("Updating owner with id: {}", id);
+        Owner owner = ownerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
+        updateEntityFromDTO(owner, dto);
         owner.setUpdatedAt(LocalDateTime.now());
         owner = ownerRepository.save(owner);
         return toDTO(owner);
     }
 
     @Transactional
-    public void softDelete(UUID id) {
-        logger.info("Soft deleting owner: {}", id);
-        Owner owner = ownerRepository.findById(id).orElseThrow(() -> new RuntimeException("Owner not found"));
-        if (animalRepository.countByOwnerIdAndDeletedAtIsNull(id) > 0) {
-            throw new RuntimeException("Cannot delete owner with active animals");
-        }
+    public void delete(UUID id) {
+        logger.info("Soft deleting owner with id: {}", id);
+        Owner owner = ownerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
         owner.setDeletedAt(LocalDateTime.now());
         ownerRepository.save(owner);
     }
@@ -82,31 +70,29 @@ public class OwnerService {
         OwnerDTO dto = new OwnerDTO();
         dto.setId(owner.getId());
         dto.setName(owner.getName());
-        dto.setPhone(owner.getPhone());
         dto.setEmail(owner.getEmail());
+        dto.setPhone(owner.getPhone());
         dto.setAddress(owner.getAddress());
+        dto.setAvatar(owner.getAvatar());
         dto.setNationalId(owner.getNationalId());
         dto.setBankAccount(owner.getBankAccount());
         dto.setEmergencyContact(owner.getEmergencyContact());
+        dto.setNotes(owner.getNotes());
         dto.setCreatedAt(owner.getCreatedAt());
         dto.setUpdatedAt(owner.getUpdatedAt());
+        dto.setDeletedAt(owner.getDeletedAt());
         return dto;
     }
 
-    private OwnerWithAnimalCountDTO toDTOWithCount(Owner owner) {
-        OwnerWithAnimalCountDTO dto = new OwnerWithAnimalCountDTO();
-        dto.setOwner(toDTO(owner));
-        dto.setAnimalCount(animalRepository.countByOwnerIdAndDeletedAtIsNull(owner.getId()));
-        return dto;
-    }
-
-    private void mapToEntity(OwnerDTO dto, Owner owner) {
+    private void updateEntityFromDTO(Owner owner, OwnerDTO dto) {
         owner.setName(dto.getName());
-        owner.setPhone(dto.getPhone());
         owner.setEmail(dto.getEmail());
+        owner.setPhone(dto.getPhone());
         owner.setAddress(dto.getAddress());
+        owner.setAvatar(dto.getAvatar());
         owner.setNationalId(dto.getNationalId());
         owner.setBankAccount(dto.getBankAccount());
         owner.setEmergencyContact(dto.getEmergencyContact());
+        owner.setNotes(dto.getNotes());
     }
 }

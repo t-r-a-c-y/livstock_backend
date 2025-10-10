@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>3.3.5</version>
+		<relativePath/>
 	</parent>
 	<groupId>com.livestock</groupId>
 	<artifactId>backend</artifactId>
@@ -16,10 +16,10 @@
 	<properties>
 		<java.version>21</java.version>
 		<lombok.version>1.18.34</lombok.version>
+		<jjwt.version>0.12.5</jjwt.version>
 	</properties>
 
 	<dependencies>
-		<!-- Spring Boot Starters -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -48,42 +48,39 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-
-		<!-- Database -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-
-		<!-- JWT Dependencies (jjwt 0.11.5 - modern API) -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.17.2</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
-
-		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<!-- Test Dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -110,7 +107,6 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<!-- Lombok annotation processor -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

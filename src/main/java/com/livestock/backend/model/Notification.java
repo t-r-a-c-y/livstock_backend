@@ -15,19 +15,43 @@ public class Notification {
     private UUID id;
 
     @Column(nullable = false)
-    private String type;
+    private String title;
 
     @Column(nullable = false)
     private String message;
 
+    @Column(nullable = false)
+    private String type;
+
+    @Column(nullable = false)
+    private String priority;
+
+    @Column(nullable = false)
+    private String category;
+
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
+
+    @Column(name = "action_required", nullable = false)
+    private boolean actionRequired;
+
+    @Column(name = "related_entity_id")
+    private UUID relatedEntityId;
+
+    @Column(name = "related_entity_type")
+    private String relatedEntityType;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     // Explicit getters and setters for isRead to avoid Lombok issues
     public boolean getIsRead() {

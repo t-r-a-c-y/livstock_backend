@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,10 +25,10 @@ public class AnimalDTO {
     private UUID ownerId;
     @NotBlank
     private String status;
-    private BigDecimal milkProduction;
+    private Double milkProduction;
     private String photo;
     private UUID parentId;
-    private BigDecimal salePrice;
+    private Double salePrice;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

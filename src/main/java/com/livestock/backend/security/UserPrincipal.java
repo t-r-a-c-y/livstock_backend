@@ -1,7 +1,6 @@
 package com.livestock.backend.security;
 
 import com.livestock.backend.model.AuthUser;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,25 +9,38 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
-@Getter
 public class UserPrincipal implements UserDetails {
     private final UUID id;
+    private final String username;
     private final String email;
-    private final String password;
     private final String name;
+    private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(AuthUser user) {
         this.id = user.getId();
+        this.username = user.getUsername();
         this.email = user.getEmail();
-        this.password = user.getPassword();
         this.name = user.getName();
+        this.password = user.getPassword();
         this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
     }
 
-    @Override
-    public String getUsername() {
+    public UUID getId() {
+        return id;
+    }
+
+    public String getEmail() {
         return email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
     }
 
     @Override
@@ -37,8 +49,8 @@ public class UserPrincipal implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+    public String getUsername() {
+        return username;
     }
 
     @Override
