@@ -1,25 +1,14 @@
-package com.livestock.backend.dto;
+package com.livestockmanagement.backend.dto;
 
 import lombok.Data;
 
 @Data
 public class ApiResponse<T> {
     private T data;
-    private ApiError error;
-
-    public ApiResponse() {}
-
-    public ApiResponse(T data, ApiError error) {
-        this.data = data;
-        this.error = error;
-    }
+    private Error error;
 
     @Data
-    public static class ApiError {
+    public static class Error {
         private String message;
-
-        public ApiError(String message) {
-            this.message = message;
-        }
     }
 }

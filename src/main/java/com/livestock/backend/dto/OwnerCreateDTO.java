@@ -1,13 +1,15 @@
 package com.livestock.backend.dto;
 
+
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Data
-public class OwnerDTO {
-    private UUID id;
+public class OwnerCreateDTO {
     private String name;
     private String email;
     private String phone;
@@ -17,8 +19,5 @@ public class OwnerDTO {
     private String bankAccount;
     private String emergencyContact;
     private String notes;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private Long animalCount; // For /api/owners/{id} with animal count
 }
+

@@ -7,9 +7,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+
+
+
 @Data
-public class ReportDTO {
-    private UUID id;
+public class ReportUpdateDTO {
     private String title;
     private String type;
     private String description;
@@ -19,8 +21,4 @@ public class ReportDTO {
     private Map<String, Object> data;
     private Map<String, Object> filters;
     private UUID generatedBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
-
-

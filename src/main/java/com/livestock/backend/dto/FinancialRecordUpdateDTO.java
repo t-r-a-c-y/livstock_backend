@@ -6,9 +6,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+
 @Data
-public class FinancialRecordDTO {
-    private UUID id;
+public class FinancialRecordUpdateDTO {
     private String type;
     private String category;
     private Double amount;
@@ -20,9 +21,4 @@ public class FinancialRecordDTO {
     private String receiptNumber;
     private String receiptImage;
     private UUID createdBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }
-
-

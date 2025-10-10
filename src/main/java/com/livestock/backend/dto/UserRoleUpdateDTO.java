@@ -5,10 +5,10 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+
 @Data
-public class UserRoleDTO {
-    private UUID id;
+public class UserRoleUpdateDTO {
     private UUID userId;
     private String role;
-    private LocalDateTime createdAt;
 }

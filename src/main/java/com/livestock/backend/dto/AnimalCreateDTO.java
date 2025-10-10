@@ -1,15 +1,14 @@
 package com.livestock.backend.dto;
 
-
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Data
-public class AnimalDTO {
-    private UUID id;
+public class AnimalCreateDTO {
     private String tagId;
     private String type;
     private String breed;
@@ -22,7 +21,5 @@ public class AnimalDTO {
     private UUID parentId;
     private Double salePrice;
     private String notes;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }
+
