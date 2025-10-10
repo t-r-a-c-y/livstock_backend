@@ -11,15 +11,15 @@ import java.util.UUID;
 @Data
 public class Profile {
     @Id
-    private UUID id;
+    private UUID id;  // FK to auth.users
 
-    @Column
+    @Column(name = "name")
     private String name;
 
-    @Column
+    @Column(name = "phone")
     private String phone;
 
-    @Column
+    @Column(name = "avatar")
     private String avatar;
 
     @Column(name = "created_at")

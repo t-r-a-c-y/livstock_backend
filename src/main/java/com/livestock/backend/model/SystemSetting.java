@@ -1,5 +1,6 @@
 package com.livestock.backend.model;
 
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -9,40 +10,40 @@ import java.util.UUID;
 @Entity
 @Table(name = "system_settings")
 @Data
-public class SystemSettings {
+public class SystemSetting {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "organization_name")
     private String organizationName;
 
-    @Column
+    @Column(name = "currency")
     private String currency;
 
-    @Column
+    @Column(name = "timezone")
     private String timezone;
 
-    @Column
+    @Column(name = "language")
     private String language;
 
     @Column(name = "date_format")
     private String dateFormat;
 
-    @Column
+    @Column(name = "theme")
     private String theme;
 
     @Column(name = "auto_backup")
-    private boolean autoBackup;
+    private Boolean autoBackup;
 
     @Column(name = "data_retention")
     private Integer dataRetention;
 
     @Column(name = "email_reports")
-    private boolean emailReports;
+    private Boolean emailReports;
 
     @Column(name = "mobile_notifications")
-    private boolean mobileNotifications;
+    private Boolean mobileNotifications;
 
     @Column(name = "notification_email")
     private String notificationEmail;

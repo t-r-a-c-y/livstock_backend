@@ -1,5 +1,6 @@
 package com.livestock.backend.model;
 
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,38 +12,35 @@ import java.util.UUID;
 @Data
 public class Notification {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "message")
     private String message;
 
-    @Column(nullable = false)
+    @Column(name = "type")
     private String type;
 
-    @Column(nullable = false)
+    @Column(name = "priority")
     private String priority;
 
-    @Column(nullable = false)
+    @Column(name = "category")
     private String category;
 
-    @Column(name = "is_read", nullable = false)
-    private boolean isRead;
+    @Column(name = "is_read")
+    private Boolean isRead = false;
 
-    @Column(name = "action_required", nullable = false)
-    private boolean actionRequired;
+    @Column(name = "action_required")
+    private Boolean actionRequired = false;
 
     @Column(name = "related_entity_id")
     private UUID relatedEntityId;
 
     @Column(name = "related_entity_type")
     private String relatedEntityType;
-
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -52,13 +50,4 @@ public class Notification {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    // Explicit getters and setters for isRead to avoid Lombok issues
-    public boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(boolean isRead) {
-        this.isRead = isRead;
-    }
 }

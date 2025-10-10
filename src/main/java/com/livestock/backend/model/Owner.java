@@ -1,5 +1,4 @@
 package com.livestock.backend.model;
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,22 +10,22 @@ import java.util.UUID;
 @Data
 public class Owner {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "name")
     private String name;
 
-    @Column
+    @Column(name = "email")
     private String email;
 
-    @Column
+    @Column(name = "phone")
     private String phone;
 
-    @Column
+    @Column(name = "address")
     private String address;
 
-    @Column
+    @Column(name = "avatar")
     private String avatar;
 
     @Column(name = "national_id")
@@ -38,7 +37,7 @@ public class Owner {
     @Column(name = "emergency_contact")
     private String emergencyContact;
 
-    @Column
+    @Column(name = "notes")
     private String notes;
 
     @Column(name = "created_at")

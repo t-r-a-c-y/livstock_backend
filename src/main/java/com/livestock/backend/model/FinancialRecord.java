@@ -12,22 +12,22 @@ import java.util.UUID;
 @Data
 public class FinancialRecord {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "type")
     private String type;
 
-    @Column
+    @Column(name = "category")
     private String category;
 
-    @Column(nullable = false)
+    @Column(name = "amount")
     private Double amount;
 
-    @Column
+    @Column(name = "description")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "date")
     private LocalDate date;
 
     @Column(name = "owner_id")
@@ -35,9 +35,6 @@ public class FinancialRecord {
 
     @Column(name = "animal_id")
     private UUID animalId;
-
-    @Column(name = "activity_id")
-    private UUID activityId;
 
     @Column(name = "payment_method")
     private String paymentMethod;

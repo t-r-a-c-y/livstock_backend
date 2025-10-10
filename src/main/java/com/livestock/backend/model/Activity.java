@@ -12,28 +12,28 @@ import java.util.UUID;
 @Data
 public class Activity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "animal_ids")
+    @Column(name = "animal_ids", columnDefinition = "uuid[]")
     private UUID[] animalIds;
 
-    @Column(nullable = false)
+    @Column(name = "type")
     private String type;
 
-    @Column
+    @Column(name = "description")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "date")
     private LocalDate date;
 
-    @Column
+    @Column(name = "amount")
     private Double amount;
 
-    @Column
+    @Column(name = "cost")
     private Double cost;
 
-    @Column
+    @Column(name = "notes")
     private String notes;
 
     @Column(name = "created_by")

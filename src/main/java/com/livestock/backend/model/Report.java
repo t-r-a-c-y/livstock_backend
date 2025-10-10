@@ -1,7 +1,10 @@
 package com.livestock.backend.model;
 
+
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,19 +15,19 @@ import java.util.UUID;
 @Data
 public class Report {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "title")
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "type")
     private String type;
 
-    @Column
+    @Column(name = "description")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "status")
     private String status;
 
     @Column(name = "date_from")
@@ -33,11 +36,13 @@ public class Report {
     @Column(name = "date_to")
     private LocalDate dateTo;
 
-    @Column(columnDefinition = "jsonb")
-    private String data;
+    @Type(JsonBinaryType.class)
+    @Column(name = "data", columnDefinition = "jsonb")
+    private Object data;  // Use Map or custom class for JSON
 
-    @Column(columnDefinition = "jsonb")
-    private String filters;
+    @Type(JsonBinaryType.class)
+    @Column(name = "filters", columnDefinition = "jsonb")
+    private Object filters;
 
     @Column(name = "generated_by")
     private UUID generatedBy;
