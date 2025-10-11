@@ -5,9 +5,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+
+
 @Data
-public class NotificationDTO {
-    private UUID id;
+public class NotificationUpdateDTO {
     private String title;
     private String message;
     private String type;
@@ -17,7 +19,5 @@ public class NotificationDTO {
     private Boolean actionRequired;
     private UUID relatedEntityId;
     private String relatedEntityType;
-    private LocalDateTime createdAt;
     private LocalDateTime readAt;
-    private LocalDateTime deletedAt;
 }
