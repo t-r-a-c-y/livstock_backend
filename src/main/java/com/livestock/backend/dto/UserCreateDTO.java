@@ -1,16 +1,19 @@
 package com.livestock.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+
 
 @Data
 public class UserCreateDTO {
-    @NotBlank
-    private String email;
-    @NotBlank
-    private String password;
-    @NotBlank
+    private String email; // For Supabase auth
+    private String password; // For Supabase auth
     private String name;
-    @NotBlank
-    private String role;
+    private String phone;
+    private String avatar;
+    private List<String> roles;
 }
