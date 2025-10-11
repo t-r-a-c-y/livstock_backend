@@ -1,99 +1,57 @@
 package com.livestock.backend.controller;
 
+import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.dto.OwnerDTO;
+import com.livestock.backend.dto.OwnerCreateDTO;
+import com.livestock.backend.dto.OwnerUpdateDTO;
 import com.livestock.backend.service.OwnerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/owners")
+@RequiredArgsConstructor
 public class OwnerController {
-
-    @Autowired
-    private OwnerService ownerService;
+    private final OwnerService ownerService;
 
     @GetMapping
-    public ResponseEntity<?> getOwners(Pageable pageable) {
-        try {
-            Page<OwnerDTO> owners = ownerService.getAll(pageable);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(owners, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<Page<OwnerDTO>>> getAll(Pageable pageable) {
+        ApiResponse<Page<OwnerDTO>> response = new ApiResponse<>();
+        response.setData(ownerService.getAllOwners(pageable));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOwner(@PathVariable UUID id) {
-        try {
-            OwnerDTO owner = ownerService.getById(id);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(owner, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<OwnerDTO>> getById(@PathVariable UUID id) {
+        ApiResponse<OwnerDTO> response = new ApiResponse<>();
+        response.setData(ownerService.getOwnerById(id));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<?> createOwner(@RequestBody OwnerDTO dto) {
-        try {
-            OwnerDTO created = ownerService.create(dto);
-            return ResponseEntity.status(201).body(new ResponseWrapper<>(created, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<OwnerDTO>> create(@Valid @RequestBody OwnerCreateDTO dto) {
+        ApiResponse<OwnerDTO> response = new ApiResponse<>();
+        response.setData(ownerService.createOwner(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateOwner(@PathVariable UUID id, @RequestBody OwnerDTO dto) {
-        try {
-            OwnerDTO updated = ownerService.update(id, dto);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(updated, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<OwnerDTO>> update(@PathVariable UUID id, @Valid @RequestBody OwnerUpdateDTO dto) {
+        ApiResponse<OwnerDTO> response = new ApiResponse<>();
+        response.setData(ownerService.updateOwner(id, dto));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteOwner(@PathVariable UUID id) {
-        try {
-            ownerService.delete(id);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(null, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
-    }
-
-    private static class ResponseWrapper<T> {
-        private final T data;
-        private final ErrorResponse error;
-
-        public ResponseWrapper(T data, ErrorResponse error) {
-            this.data = data;
-            this.error = error;
-        }
-
-        public T getData() {
-            return data;
-        }
-
-        public ErrorResponse getError() {
-            return error;
-        }
-    }
-
-    private static class ErrorResponse {
-        private final String message;
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        ownerService.softDeleteOwner(id);
+        return ResponseEntity.noContent().build();
     }
 }

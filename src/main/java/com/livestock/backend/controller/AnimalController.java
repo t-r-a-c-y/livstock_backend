@@ -1,103 +1,69 @@
 package com.livestock.backend.controller;
 
+import com.livestock.backend.dto.ApiResponse;
 import com.livestock.backend.dto.AnimalDTO;
+import com.livestock.backend.dto.AnimalCreateDTO;
+import com.livestock.backend.dto.AnimalUpdateDTO;
 import com.livestock.backend.service.AnimalService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/animals")
+@RequiredArgsConstructor
 public class AnimalController {
-
-    @Autowired
-    private AnimalService animalService;
+    private final AnimalService animalService;
 
     @GetMapping
-    public ResponseEntity<?> getAnimals(
+    public ResponseEntity<ApiResponse<Page<AnimalDTO>>> getAll(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID ownerId,
             Pageable pageable) {
-        try {
-            Page<AnimalDTO> animals = animalService.getAll(type, status, ownerId, pageable);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(animals, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+        ApiResponse<Page<AnimalDTO>> response = new ApiResponse<>();
+        response.setData(animalService.getAllAnimals(type, status, ownerId, pageable));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getAnimal(@PathVariable UUID id) {
-        try {
-            AnimalDTO animal = animalService.getById(id);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(animal, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<AnimalDTO>> getById(@PathVariable UUID id) {
+        ApiResponse<AnimalDTO> response = new ApiResponse<>();
+        response.setData(animalService.getAnimalById(id));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<?> createAnimal(@RequestBody AnimalDTO dto) {
-        try {
-            AnimalDTO created = animalService.create(dto);
-            return ResponseEntity.status(201).body(new ResponseWrapper<>(created, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<AnimalDTO>> create(@Valid @RequestBody AnimalCreateDTO dto) {
+        ApiResponse<AnimalDTO> response = new ApiResponse<>();
+        response.setData(animalService.createAnimal(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAnimal(@PathVariable UUID id, @RequestBody AnimalDTO dto) {
-        try {
-            AnimalDTO updated = animalService.update(id, dto);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(updated, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<AnimalDTO>> update(@PathVariable UUID id, @Valid @RequestBody AnimalUpdateDTO dto) {
+        ApiResponse<AnimalDTO> response = new ApiResponse<>();
+        response.setData(animalService.updateAnimal(id, dto));
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAnimal(@PathVariable UUID id) {
-        try {
-            animalService.delete(id);
-            return ResponseEntity.ok().body(new ResponseWrapper<>(null, null));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ResponseWrapper<>(null, new ErrorResponse(e.getMessage())));
-        }
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        animalService.softDeleteAnimal(id);
+        return ResponseEntity.noContent().build();
     }
 
-    private static class ResponseWrapper<T> {
-        private final T data;
-        private final ErrorResponse error;
-
-        public ResponseWrapper(T data, ErrorResponse error) {
-            this.data = data;
-            this.error = error;
-        }
-
-        public T getData() {
-            return data;
-        }
-
-        public ErrorResponse getError() {
-            return error;
-        }
-    }
-
-    private static class ErrorResponse {
-        private final String message;
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStats() {
+        ApiResponse<Map<String, Object>> response = new ApiResponse<>();
+        response.setData(animalService.getAnimalStats());
+        return ResponseEntity.ok(response);
     }
 }

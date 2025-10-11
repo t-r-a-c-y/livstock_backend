@@ -1,4 +1,4 @@
-package com.livestockmanagement.backend.dto;
+package com.livestock.backend.dto;
 
 import lombok.Data;
 
