@@ -37,7 +37,7 @@ public class AnimalRequest {
 
     private UUID parentId;
 
-    private Big CamelCase salePrice;
+    private BigDecimal salePrice;   // ← FIXED HERE
 
     private String notes;
 }
