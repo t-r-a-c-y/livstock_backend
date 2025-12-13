@@ -1,14 +1,14 @@
+// src/main/java/com/livestock/security/JwtTokenProvider.java
 package com.livestock.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -16,14 +16,13 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     @Value("${jwt.secret}")
-    private String jwtSecret;  // Ensure this is a base64-encoded strong key in application.properties (min 256 bits for HS512)
+    private String jwtSecret;
 
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);  // Or use Keys.hmacShaKeyFor(jwtSecret.getBytes()) if not base64
-        return Keys.hmacShaKeyFor(keyBytes);
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     public String generateToken(Authentication authentication) {
@@ -36,11 +35,11 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .subject(username)  // Modern API
+                .subject(username)
                 .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())  // No SignatureAlgorithm needed
+                .signWith(getSigningKey())  // ← modern way, no SignatureAlgorithm needed
                 .compact();
     }
 
@@ -50,6 +49,7 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
         return claims.getSubject();
     }
 
@@ -60,7 +60,7 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
     }
