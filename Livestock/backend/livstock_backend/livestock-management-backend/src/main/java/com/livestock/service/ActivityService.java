@@ -6,6 +6,7 @@ import com.livestock.dto.response.ActivityResponse;
 import com.livestock.entity.Activity;
 import com.livestock.entity.Animal;
 import com.livestock.entity.FinancialRecord;
+import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.ActivityRepository;
 import com.livestock.repository.AnimalRepository;
 import com.livestock.repository.FinancialRecordRepository;
