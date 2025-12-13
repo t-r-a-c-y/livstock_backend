@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -21,8 +21,10 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    // Generate a proper SecretKey (HMAC-SHA key)
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = jwtSecret.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(Authentication authentication) {
@@ -39,13 +41,13 @@ public class JwtTokenProvider {
                 .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())  // ← modern way, no SignatureAlgorithm needed
+                .signWith(getSigningKey())  // Works because SecretKey extends Key
                 .compact();
     }
 
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(getSigningKey())  // Now SecretKey matches
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -60,7 +62,8 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (SecurityException | MalformedJwtException | ExpiredJwtException |
+                 UnsupportedJwtException | IllegalArgumentException e) {
             return false;
         }
     }
