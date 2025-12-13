@@ -6,16 +6,19 @@ import com.livestock.dto.response.ApiResponse;
 import com.livestock.dto.response.LoginResponse;
 import com.livestock.service.AuthService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+
+    // Explicit constructor — fixes "not initialized" error
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {

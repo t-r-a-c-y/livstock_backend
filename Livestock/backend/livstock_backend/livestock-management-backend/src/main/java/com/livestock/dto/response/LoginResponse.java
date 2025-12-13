@@ -13,4 +13,7 @@ public class LoginResponse {
     private String role;
     private String avatar;
     private String token;
+    public void setToken(String token) {
+        this.token = token;
+    }
 }

@@ -50,4 +50,24 @@ public class User {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
 }
