@@ -50,9 +50,5 @@ public class Activity {
 
     @ManyToMany(mappedBy = "activities")
     private List<Animal> animals = new ArrayList<>();
-    // src/main/java/com/livestock/entity/Activity.java
-// ... (keep everything the same, just make sure this part is correct)
 
-    @ManyToMany(mappedBy = "activities")
-    private List<Animal> animals = new ArrayList<>();  // ← Lombok @Data will generate getAnimals() and setAnimals()
 }
