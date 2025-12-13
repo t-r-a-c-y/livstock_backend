@@ -18,10 +18,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/activities")
-@RequiredArgsConstructor
 public class ActivityController {
 
     private final ActivityService activityService;
+
+    // Explicit constructor to avoid Lombok issues
+    public ActivityController(ActivityService activityService) {
+        this.activityService = activityService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ActivityResponse>>> getAllActivities(

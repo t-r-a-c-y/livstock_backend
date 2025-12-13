@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ActivityService {
 
     private final ActivityRepository activityRepository;
@@ -29,23 +31,24 @@ public class ActivityService {
     private final FinancialRecordRepository financialRecordRepository;
     private final ModelMapper modelMapper;
 
-    @Transactional
     public ActivityResponse createActivity(ActivityRequest request) {
+        // Fetch valid animals (not soft-deleted)
         List<Animal> animals = animalRepository.findAllById(request.getAnimalIds())
                 .stream()
                 .filter(a -> a.getDeletedAt() == null)
-                .collect(Collectors.toList());
+                .toList();
 
         if (animals.isEmpty()) {
-            throw new ResourceNotFoundException("No valid animals found");
+            throw new ResourceNotFoundException("No valid animals found for the provided IDs");
         }
 
+        // Map request to entity
         Activity activity = modelMapper.map(request, Activity.class);
-        activity.setAnimals(animals);
+        activity.setAnimals(animals);  // ← now works
         activity = activityRepository.save(activity);
 
-        // Auto-create financial record if cost/amount exists
-        if (request.getCost() != null && request.getCost().compareTo(java.math.BigDecimal.ZERO) > 0) {
+        // Auto-create financial record if cost > 0
+        if (request.getCost() != null && request.getCost().compareTo(BigDecimal.ZERO) > 0) {
             FinancialRecord fr = new FinancialRecord();
             fr.setType("expense");
             fr.setCategory("Activity: " + request.getType());
@@ -61,6 +64,7 @@ public class ActivityService {
 
     public List<ActivityResponse> getAllActivities(String type, UUID animalId, LocalDateTime from, LocalDateTime to) {
         List<Activity> activities;
+
         if (animalId != null) {
             activities = activityRepository.findByAnimalId(animalId);
         } else if (from != null && to != null) {
@@ -70,15 +74,22 @@ public class ActivityService {
         } else {
             activities = activityRepository.findAllActive();
         }
-        return activities.stream().map(this::mapToResponse).collect(Collectors.toList());
+
+        return activities.stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     private ActivityResponse mapToResponse(Activity activity) {
         ActivityResponse response = modelMapper.map(activity, ActivityResponse.class);
-        response.setAnimalIds(activity.getAnimals().stream().map(Animal::getId).collect(Collectors.toList()));
-        response.setAnimalTagIds(activity.getAnimals().stream().map(Animal::getTagId).collect(Collectors.toList()));
+        response.setAnimalIds(activity.getAnimals().stream()
+                .map(Animal::getId)
+                .toList());
+        response.setAnimalTagIds(activity.getAnimals().stream()
+                .map(Animal::getTagId)
+                .toList());
         return response;
     }
 
-    // getById, update, delete — similar pattern
+    // Add getById, update, delete later if needed
 }

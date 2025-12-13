@@ -13,7 +13,7 @@ import java.util.UUID;
 @Data
 public class ActivityRequest {
     @NotNull
-    private List<UUID> animalIds;
+    private List<UUID> animalIds;  // ← this generates getAnimalIds()
 
     @NotBlank
     private String type;
@@ -25,9 +25,11 @@ public class ActivityRequest {
     private LocalDateTime date;
 
     private BigDecimal amount;
-    private BigDecimal cost;
+
+    private BigDecimal cost;       // ← ADD THIS
+
     private String notes;
 
     @NotBlank
-    private String createdBy; // user ID or name
+    private String createdBy;      // ← this generates getCreatedBy()
 }
