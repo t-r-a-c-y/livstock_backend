@@ -48,7 +48,19 @@ public class Activity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+
+
+    // In src/main/java/com/livestock/entity/Activity.java
+
     @ManyToMany(mappedBy = "activities")
     private List<Animal> animals = new ArrayList<>();
 
+    // Add these methods
+    public List<Animal> getAnimals() {
+        return animals;
+    }
+
+    public void setAnimals(List<Animal> animals) {
+        this.animals = animals;
+    }
 }

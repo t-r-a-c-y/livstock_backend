@@ -10,7 +10,6 @@ import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.ActivityRepository;
 import com.livestock.repository.AnimalRepository;
 import com.livestock.repository.FinancialRecordRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ActivityService {
 
@@ -29,6 +27,16 @@ public class ActivityService {
     private final AnimalRepository animalRepository;
     private final FinancialRecordRepository financialRecordRepository;
     private final ModelMapper modelMapper;
+
+    public ActivityService(ActivityRepository activityRepository,
+                           AnimalRepository animalRepository,
+                           FinancialRecordRepository financialRecordRepository,
+                           ModelMapper modelMapper) {
+        this.activityRepository = activityRepository;
+        this.animalRepository = animalRepository;
+        this.financialRecordRepository = financialRecordRepository;
+        this.modelMapper = modelMapper;
+    }
 
     public ActivityResponse createActivity(ActivityRequest request) {
         List<Animal> animals = animalRepository.findAllById(request.getAnimalIds())
@@ -41,10 +49,9 @@ public class ActivityService {
         }
 
         Activity activity = modelMapper.map(request, Activity.class);
-        activity.setAnimals(animals);  // ← now works
+        activity.setAnimals(animals);
         activity = activityRepository.save(activity);
 
-        // Auto-create expense if cost exists
         if (request.getCost() != null && request.getCost().compareTo(BigDecimal.ZERO) > 0) {
             FinancialRecord fr = new FinancialRecord();
             fr.setType("expense");
@@ -60,8 +67,8 @@ public class ActivityService {
     }
 
     public List<ActivityResponse> getAllActivities(String type, UUID animalId, LocalDateTime from, LocalDateTime to) {
-        // ... (your filtering logic)
-        List<Activity> activities = activityRepository.findAllActive(); // example
+        // Simplified — add your filtering logic here
+        List<Activity> activities = activityRepository.findAllActive();
         return activities.stream()
                 .map(this::mapToResponse)
                 .toList();

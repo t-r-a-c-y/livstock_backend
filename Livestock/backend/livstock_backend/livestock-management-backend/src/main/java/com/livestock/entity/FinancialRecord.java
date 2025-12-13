@@ -62,4 +62,16 @@ public class FinancialRecord {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
 }
