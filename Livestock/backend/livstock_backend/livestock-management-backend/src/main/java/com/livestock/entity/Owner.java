@@ -53,4 +53,12 @@ public class Owner {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

@@ -8,22 +8,25 @@ import com.livestock.entity.Owner;
 import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.AnimalRepository;
 import com.livestock.repository.OwnerRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AnimalService {
 
     private final AnimalRepository animalRepository;
     private final OwnerRepository ownerRepository;
     private final ModelMapper modelMapper;
+
+    public AnimalService(AnimalRepository animalRepository, OwnerRepository ownerRepository, ModelMapper modelMapper) {
+        this.animalRepository = animalRepository;
+        this.ownerRepository = ownerRepository;
+        this.modelMapper = modelMapper;
+    }
 
     public List<AnimalResponse> getAllAnimals(String status, String type, UUID ownerId, String search) {
         List<Animal> animals;
@@ -44,18 +47,22 @@ public class AnimalService {
 
         return animals.stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public AnimalResponse getAnimalById(UUID id) {
-        Animal animal = animalRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Animal not found"));
+        Animal animal = animalRepository.findActiveById(id);
+        if (animal == null) {
+            throw new ResourceNotFoundException("Animal not found");
+        }
         return mapToResponse(animal);
     }
 
     public AnimalResponse createAnimal(AnimalRequest request) {
-        Owner owner = ownerRepository.findActiveById(request.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        Owner owner = ownerRepository.findActiveById(request.getOwnerId());
+        if (owner == null) {
+            throw new ResourceNotFoundException("Owner not found");
+        }
 
         Animal animal = modelMapper.map(request, Animal.class);
         animal.setOwner(owner);
@@ -65,11 +72,15 @@ public class AnimalService {
     }
 
     public AnimalResponse updateAnimal(UUID id, AnimalRequest request) {
-        Animal animal = animalRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Animal not found"));
+        Animal animal = animalRepository.findActiveById(id);
+        if (animal == null) {
+            throw new ResourceNotFoundException("Animal not found");
+        }
 
-        Owner owner = ownerRepository.findActiveById(request.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        Owner owner = ownerRepository.findActiveById(request.getOwnerId());
+        if (owner == null) {
+            throw new ResourceNotFoundException("Owner not found");
+        }
 
         modelMapper.map(request, animal);
         animal.setOwner(owner);
@@ -80,8 +91,10 @@ public class AnimalService {
     }
 
     public void deleteAnimal(UUID id) {
-        Animal animal = animalRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Animal not found"));
+        Animal animal = animalRepository.findActiveById(id);
+        if (animal == null) {
+            throw new ResourceNotFoundException("Animal not found");
+        }
         animal.setDeletedAt(LocalDateTime.now());
         animalRepository.save(animal);
     }

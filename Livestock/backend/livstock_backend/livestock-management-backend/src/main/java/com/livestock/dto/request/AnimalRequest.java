@@ -40,4 +40,8 @@ public class AnimalRequest {
     private BigDecimal salePrice;   // ← FIXED HERE
 
     private String notes;
+
+    public UUID getOwnerId() {
+        return ownerId;
+    }
 }

@@ -6,7 +6,6 @@ import com.livestock.dto.response.AnimalResponse;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.service.AnimalService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +15,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/animals")
-@RequiredArgsConstructor
 public class AnimalController {
 
     private final AnimalService animalService;
+
+    // Explicit constructor — fixes "not initialized" error
+    public AnimalController(AnimalService animalService) {
+        this.animalService = animalService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AnimalResponse>>> getAllAnimals(

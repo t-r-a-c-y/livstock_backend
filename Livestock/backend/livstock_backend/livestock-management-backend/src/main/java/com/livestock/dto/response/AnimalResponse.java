@@ -27,4 +27,17 @@ public class AnimalResponse {
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void setParentTagId(String parentTagId) {
+        this.parentTagId = parentTagId;
+    }
+
+    public void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
 }
