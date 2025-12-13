@@ -45,7 +45,7 @@ public class ActivityService {
                 .toList();
 
         if (animals.isEmpty()) {
-            throw new ResourceNotFoundException("No valid animals found");
+            throw new ResourceNotFoundException("No valid (non-deleted) animals found for the provided IDs");
         }
 
         Activity activity = modelMapper.map(request, Activity.class);
@@ -67,21 +67,42 @@ public class ActivityService {
     }
 
     public List<ActivityResponse> getAllActivities(String type, UUID animalId, LocalDateTime from, LocalDateTime to) {
-        // Simplified — add your filtering logic here
-        List<Activity> activities = activityRepository.findAllActive();
+        List<Activity> activities;
+
+        if (animalId != null) {
+            activities = activityRepository.findByAnimalId(animalId);
+        } else if (from != null && to != null) {
+            activities = activityRepository.findByDateRange(from, to);
+        } else if (type != null) {
+            activities = activityRepository.findByTypeAndDeletedAtIsNull(type);
+        } else {
+            activities = activityRepository.findAllActive();
+        }
+
         return activities.stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    public ActivityResponse getActivityById(UUID id) {
+        Activity activity = activityRepository.findActiveById(id);
+        if (activity == null) {
+            throw new ResourceNotFoundException("Activity not found with id: " + id);
+        }
+        return mapToResponse(activity);
+    }
+
     private ActivityResponse mapToResponse(Activity activity) {
         ActivityResponse response = modelMapper.map(activity, ActivityResponse.class);
+
         response.setAnimalIds(activity.getAnimals().stream()
                 .map(Animal::getId)
                 .toList());
+
         response.setAnimalTagIds(activity.getAnimals().stream()
                 .map(Animal::getTagId)
                 .toList());
+
         return response;
     }
 }

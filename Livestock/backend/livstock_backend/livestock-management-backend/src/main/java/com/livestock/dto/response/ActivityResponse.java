@@ -21,4 +21,13 @@ public class ActivityResponse {
     private LocalDateTime createdAt;
     private List<UUID> animalIds;
     private List<String> animalTagIds;
+
+
+    public void setAnimalIds(List<UUID> animalIds) {
+        this.animalIds = animalIds;
+    }
+
+    public void setAnimalTagIds(List<String> animalTagIds) {
+        this.animalTagIds = animalTagIds;
+    }
 }

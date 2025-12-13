@@ -80,4 +80,16 @@ public class Animal {
             inverseJoinColumns = @JoinColumn(name = "activity_id")
     )
     private List<Activity> activities = new ArrayList<>();
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getTagId() {
+        return tagId;
+    }
 }

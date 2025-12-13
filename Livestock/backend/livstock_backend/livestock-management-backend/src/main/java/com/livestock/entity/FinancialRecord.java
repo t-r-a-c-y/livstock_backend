@@ -74,4 +74,15 @@ public class FinancialRecord {
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
     }
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }
