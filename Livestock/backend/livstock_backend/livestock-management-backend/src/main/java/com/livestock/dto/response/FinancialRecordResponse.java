@@ -25,4 +25,22 @@ public class FinancialRecordResponse {
     private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    public void setAnimalId(UUID animalId) {
+        this.animalId = animalId;
+    }
+
+    public void setAnimalTagId(String animalTagId) {
+        this.animalTagId = animalTagId;
+    }
+
+
 }
