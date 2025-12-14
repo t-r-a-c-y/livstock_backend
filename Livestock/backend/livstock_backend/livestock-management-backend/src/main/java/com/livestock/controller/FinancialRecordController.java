@@ -6,7 +6,6 @@ import com.livestock.dto.response.FinancialRecordResponse;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.service.FinancialRecordService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/financial-records")
-@RequiredArgsConstructor
 public class FinancialRecordController {
 
     private final FinancialRecordService financialRecordService;
+
+    // Explicit constructor — fixes injection error
+    public FinancialRecordController(FinancialRecordService financialRecordService) {
+        this.financialRecordService = financialRecordService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<FinancialRecordResponse>>> getAllRecords(
