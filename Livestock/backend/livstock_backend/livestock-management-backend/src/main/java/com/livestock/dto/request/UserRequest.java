@@ -21,4 +21,12 @@ public class UserRequest {
 
     private String phone;
     private String avatar;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 }
