@@ -69,9 +69,9 @@ public class FinancialRecordService {
 
     public FinancialRecordResponse createFinancialRecord(FinancialRecordRequest request) {
         Owner owner = request.getOwnerId() != null ?
-                ownerRepository.findActiveById(request.getOwnerId()).orElse(null) : null;
+                ownerRepository.findActiveById(request.getOwnerId()) : null;
         Animal animal = request.getAnimalId() != null ?
-                animalRepository.findActiveById(request.getAnimalId()).orElse(null) : null;
+                animalRepository.findActiveById(request.getAnimalId()) : null;
 
         FinancialRecord record = modelMapper.map(request, FinancialRecord.class);
         record.setOwner(owner);
@@ -88,9 +88,9 @@ public class FinancialRecordService {
         }
 
         Owner owner = request.getOwnerId() != null ?
-                ownerRepository.findActiveById(request.getOwnerId()).orElse(null) : null;
+                ownerRepository.findActiveById(request.getOwnerId()) : null;
         Animal animal = request.getAnimalId() != null ?
-                animalRepository.findActiveById(request.getAnimalId()).orElse(null) : null;
+                animalRepository.findActiveById(request.getAnimalId()) : null;
 
         modelMapper.map(request, record);
         record.setOwner(owner);
