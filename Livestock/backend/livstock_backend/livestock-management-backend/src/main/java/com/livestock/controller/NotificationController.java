@@ -4,7 +4,6 @@ package com.livestock.controller;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.entity.Notification;
 import com.livestock.service.NotificationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +12,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/notifications")
-@RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService notificationService;
+
+    // Explicit constructor — fixes the injection error
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Notification>>> getNotifications(
