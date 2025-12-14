@@ -82,4 +82,8 @@ public class User {
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
