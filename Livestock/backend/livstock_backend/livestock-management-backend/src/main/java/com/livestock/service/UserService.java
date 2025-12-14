@@ -6,7 +6,6 @@ import com.livestock.dto.response.UserResponse;
 import com.livestock.entity.User;
 import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,20 +13,24 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
 
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.modelMapper = modelMapper;
+    }
+
     public List<UserResponse> getAllUsers() {
         return userRepository.findAllActive().stream()
                 .map(u -> modelMapper.map(u, UserResponse.class))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public UserResponse getUserById(UUID id) {
