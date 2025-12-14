@@ -6,7 +6,6 @@ import com.livestock.dto.response.OwnerResponse;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +15,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/owners")
-@RequiredArgsConstructor
 public class OwnerController {
 
     private final OwnerService ownerService;
+
+    // Explicit constructor — fixes "not initialized" error
+    public OwnerController(OwnerService ownerService) {
+        this.ownerService = ownerService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
