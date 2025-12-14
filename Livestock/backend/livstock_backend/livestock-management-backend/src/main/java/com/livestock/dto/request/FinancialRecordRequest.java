@@ -34,4 +34,12 @@ public class FinancialRecordRequest {
 
     @NotBlank
     private String createdBy;
+
+    public UUID getOwnerId() {
+        return ownerId;
+    }
+
+    public UUID getAnimalId() {
+        return animalId;
+    }
 }

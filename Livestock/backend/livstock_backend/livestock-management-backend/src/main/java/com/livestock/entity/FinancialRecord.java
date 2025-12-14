@@ -85,4 +85,36 @@ public class FinancialRecord {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public Owner getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Owner owner) {
+        this.owner = owner;
+    }
+
+    public Animal getAnimal() {
+        return animal;
+    }
+
+    public void setAnimal(Animal animal) {
+        this.animal = animal;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
 }
