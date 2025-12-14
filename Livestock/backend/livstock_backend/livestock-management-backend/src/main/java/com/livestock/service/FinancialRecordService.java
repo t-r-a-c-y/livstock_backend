@@ -10,7 +10,6 @@ import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.AnimalRepository;
 import com.livestock.repository.FinancialRecordRepository;
 import com.livestock.repository.OwnerRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -18,16 +17,24 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class FinancialRecordService {
 
     private final FinancialRecordRepository financialRecordRepository;
     private final OwnerRepository ownerRepository;
     private final AnimalRepository animalRepository;
     private final ModelMapper modelMapper;
+
+    public FinancialRecordService(FinancialRecordRepository financialRecordRepository,
+                                  OwnerRepository ownerRepository,
+                                  AnimalRepository animalRepository,
+                                  ModelMapper modelMapper) {
+        this.financialRecordRepository = financialRecordRepository;
+        this.ownerRepository = ownerRepository;
+        this.animalRepository = animalRepository;
+        this.modelMapper = modelMapper;
+    }
 
     public List<FinancialRecordResponse> getAllFinancialRecords(
             String type, String category, LocalDateTime from, LocalDateTime to,
@@ -41,8 +48,6 @@ public class FinancialRecordService {
             records = financialRecordRepository.findByOwnerIdAndDeletedAtIsNull(ownerId);
         } else if (animalId != null) {
             records = financialRecordRepository.findByAnimalIdAndDeletedAtIsNull(animalId);
-        } else if (type != null && category != null) {
-            records = financialRecordRepository.findByCategory(category);
         } else if (type != null) {
             records = financialRecordRepository.findByTypeAndDeletedAtIsNull(type);
         } else {
@@ -51,12 +56,14 @@ public class FinancialRecordService {
 
         return records.stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public FinancialRecordResponse getFinancialRecordById(UUID id) {
-        FinancialRecord record = financialRecordRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found"));
+        FinancialRecord record = financialRecordRepository.findActiveById(id);
+        if (record == null) {
+            throw new ResourceNotFoundException("Financial record not found");
+        }
         return mapToResponse(record);
     }
 
@@ -75,8 +82,10 @@ public class FinancialRecordService {
     }
 
     public FinancialRecordResponse updateFinancialRecord(UUID id, FinancialRecordRequest request) {
-        FinancialRecord record = financialRecordRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found"));
+        FinancialRecord record = financialRecordRepository.findActiveById(id);
+        if (record == null) {
+            throw new ResourceNotFoundException("Financial record not found");
+        }
 
         Owner owner = request.getOwnerId() != null ?
                 ownerRepository.findActiveById(request.getOwnerId()).orElse(null) : null;
@@ -93,18 +102,13 @@ public class FinancialRecordService {
     }
 
     public void deleteFinancialRecord(UUID id) {
-        FinancialRecord record = financialRecordRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Financial record not found"));
+        FinancialRecord record = financialRecordRepository.findActiveById(id);
+        if (record == null) {
+            throw new ResourceNotFoundException("Financial record not found");
+        }
         record.setDeletedAt(LocalDateTime.now());
         financialRecordRepository.save(record);
     }
-
-    // Dashboard summary
-    public record FinancialSummary(
-            BigDecimal totalIncome,
-            BigDecimal totalExpense,
-            BigDecimal profit
-    ) {}
 
     public FinancialSummary getSummary() {
         List<FinancialRecord> all = financialRecordRepository.findAllActive();
@@ -121,6 +125,8 @@ public class FinancialRecordService {
 
         return new FinancialSummary(income, expense, income.subtract(expense));
     }
+
+    public record FinancialSummary(BigDecimal totalIncome, BigDecimal totalExpense, BigDecimal profit) {}
 
     private FinancialRecordResponse mapToResponse(FinancialRecord record) {
         FinancialRecordResponse response = modelMapper.map(record, FinancialRecordResponse.class);

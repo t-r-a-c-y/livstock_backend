@@ -33,4 +33,7 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
     @Query("SELECT f FROM FinancialRecord f WHERE f.deletedAt IS NULL " +
             "AND f.category = :category")
     List<FinancialRecord> findByCategory(@Param("category") String category);
+
+    @Query("SELECT f FROM FinancialRecord f WHERE f.deletedAt IS NULL AND f.date BETWEEN :from AND :to")
+    List<FinancialRecord> findByDateRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }
