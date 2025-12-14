@@ -6,31 +6,35 @@ import com.livestock.dto.response.OwnerResponse;
 import com.livestock.entity.Owner;
 import com.livestock.exception.ResourceNotFoundException;
 import com.livestock.repository.OwnerRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class OwnerService {
 
     private final OwnerRepository ownerRepository;
     private final ModelMapper modelMapper;
 
+    public OwnerService(OwnerRepository ownerRepository, ModelMapper modelMapper) {
+        this.ownerRepository = ownerRepository;
+        this.modelMapper = modelMapper;
+    }
+
     public List<OwnerResponse> getAllOwners() {
         return ownerRepository.findAllActive().stream()
                 .map(o -> modelMapper.map(o, OwnerResponse.class))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public OwnerResponse getOwnerById(UUID id) {
-        Owner owner = ownerRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        Owner owner = ownerRepository.findActiveById(id);
+        if (owner == null) {
+            throw new ResourceNotFoundException("Owner not found");
+        }
         return modelMapper.map(owner, OwnerResponse.class);
     }
 
@@ -41,8 +45,10 @@ public class OwnerService {
     }
 
     public OwnerResponse updateOwner(UUID id, OwnerRequest request) {
-        Owner owner = ownerRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        Owner owner = ownerRepository.findActiveById(id);
+        if (owner == null) {
+            throw new ResourceNotFoundException("Owner not found");
+        }
         modelMapper.map(request, owner);
         owner.setUpdatedAt(LocalDateTime.now());
         owner = ownerRepository.save(owner);
@@ -50,8 +56,10 @@ public class OwnerService {
     }
 
     public void deleteOwner(UUID id) {
-        Owner owner = ownerRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        Owner owner = ownerRepository.findActiveById(id);
+        if (owner == null) {
+            throw new ResourceNotFoundException("Owner not found");
+        }
         owner.setDeletedAt(LocalDateTime.now());
         ownerRepository.save(owner);
     }
