@@ -2,10 +2,8 @@
 package com.livestock.service;
 
 import com.livestock.dto.request.GenerateReportRequest;
-import com.livestock.dto.response.ApiResponse;
 import com.livestock.entity.Report;
 import com.livestock.repository.ReportRepository;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +13,15 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ModelMapper modelMapper;
+
+    public ReportService(ReportRepository reportRepository, ModelMapper modelMapper) {
+        this.reportRepository = reportRepository;
+        this.modelMapper = modelMapper;
+    }
 
     public List<Report> getAllReports() {
         return reportRepository.findTop10ByOrderByCreatedAtDesc();
@@ -40,8 +42,7 @@ public class ReportService {
         report.setGeneratedBy(generatedBy);
         report.setStatus("pending");
 
-        // Simulate async report generation (in real app: use @Async + background job)
-        // For now, we set dummy data
+        // Simulate report generation (in real app: async job)
         report.setData(Map.of(
                 "message", "Report generation completed",
                 "generatedAt", LocalDateTime.now().toString(),
