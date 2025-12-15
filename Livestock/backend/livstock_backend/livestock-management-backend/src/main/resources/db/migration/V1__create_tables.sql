@@ -24,7 +24,29 @@ CREATE INDEX idx_animals_type ON animals(type);
 CREATE INDEX idx_animals_deleted_at ON animals(deleted_at);
 
 -- (Add all other tables similarly: Owners, Activities, Activity_Animals, Financial_Records, Users, Reports, Notifications, System_Settings)
+CREATE TABLE activities (
+                            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                            type VARCHAR(50) NOT NULL CHECK (type IN ('milking', 'birth', 'death', 'illness', 'treatment', 'sale', 'vaccination')),
+                            description TEXT NOT NULL,
+                            date TIMESTAMP NOT NULL,
+                            amount DECIMAL(10, 2),
+                            cost DECIMAL(10, 2),
+                            notes TEXT,
+                            created_by VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            deleted_at TIMESTAMP
+);
 
+CREATE INDEX idx_activities_type ON activities(type);
+CREATE INDEX idx_activities_date ON activities(date);
+CREATE INDEX idx_activities_deleted_at ON activities(deleted_at);
+
+
+CREATE TABLE activity_animals (
+                                  activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+                                  animal_id UUID NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+                                  PRIMARY KEY (activity_id, animal_id)
+);
 -- Trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
