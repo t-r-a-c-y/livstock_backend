@@ -56,4 +56,16 @@ public class Report {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    public void setGeneratedBy(String generatedBy) {
+        this.generatedBy = generatedBy;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
 }
