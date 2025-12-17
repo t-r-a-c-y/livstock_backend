@@ -11,6 +11,7 @@ import com.livestock.repository.OwnerRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -71,6 +72,7 @@ public class AnimalService {
         return mapToResponse(animal);
     }
 
+
     public AnimalResponse updateAnimal(UUID id, AnimalRequest request) {
         Animal animal = animalRepository.findActiveById(id);
         if (animal == null) {
@@ -109,5 +111,37 @@ public class AnimalService {
             response.setParentTagId(animal.getParent().getTagId());
         }
         return response;
+    }
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
+
+    public AnimalResponse uploadAnimalPhoto(UUID animalId, MultipartFile file) {
+        Animal animal = animalRepository.findActiveById(animalId);
+        if (animal == null) {
+            throw new ResourceNotFoundException("Animal not found");
+        }
+
+        try {
+            // Create upload directory if not exists
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Generate unique filename
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(filename);
+            Files.copy(file.getInputStream(), filePath);
+
+            // Save relative path or full URL
+            String photoUrl = "/uploads/" + filename;  // We'll serve it statically
+            animal.setPhoto(photoUrl);
+            animalRepository.save(animal);
+
+            return mapToResponse(animal);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload photo: " + e.getMessage());
+        }
     }
 }
