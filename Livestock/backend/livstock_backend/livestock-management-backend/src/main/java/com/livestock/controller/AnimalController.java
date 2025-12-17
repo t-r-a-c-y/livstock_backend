@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,5 +59,13 @@ public class AnimalController {
     public ResponseEntity<ApiResponse<Void>> deleteAnimal(@PathVariable UUID id) {
         animalService.deleteAnimal(id);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    @PostMapping("/{id}/upload-photo")
+    public ResponseEntity<ApiResponse<AnimalResponse>> uploadPhoto(
+            @PathVariable UUID id,
+            @RequestParam("photo") MultipartFile photo) {
+
+        AnimalResponse updatedAnimal = animalService.uploadAnimalPhoto(id, photo);
+        return ResponseEntity.ok(ApiResponse.success(updatedAnimal));
     }
 }
