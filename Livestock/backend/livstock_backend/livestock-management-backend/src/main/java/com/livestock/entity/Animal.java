@@ -104,27 +104,27 @@ public class Animal {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public Animal getParent() {
-        return parent;
-    }
-
-    @Column(columnDefinition = "TEXT")
-    private String photo;  // This will store the file path or URL
-
-    // Add getter and setter if missing
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
-    }
+//    public void setUpdatedAt(LocalDateTime updatedAt) {
+//        this.updatedAt = updatedAt;
+//    }
+//
+//    public void setDeletedAt(LocalDateTime deletedAt) {
+//        this.deletedAt = deletedAt;
+//    }
+//
+//    public Animal getParent() {
+//        return parent;
+//    }
+//
+//    @Column(columnDefinition = "TEXT")
+//    private String photo;  // This will store the file path or URL
+//
+//    // Add getter and setter if missing
+//    public String getPhoto() {
+//        return photo;
+//    }
+//
+//    public void setPhoto(String photo) {
+//        this.photo = photo;
+//    }
 }
