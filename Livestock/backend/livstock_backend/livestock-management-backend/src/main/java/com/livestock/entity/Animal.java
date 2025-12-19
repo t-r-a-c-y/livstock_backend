@@ -117,7 +117,7 @@ public class Animal {
     }
 
     @Column(columnDefinition = "TEXT")
-    private String photo;  // This will store the file path or URL
+    private String photo;  // ← Keep ONLY this line
 
     // Add getter and setter if missing
     public String getPhoto() {
