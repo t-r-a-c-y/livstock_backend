@@ -50,8 +50,8 @@ public class Animal {
     @Column(precision = 10, scale = 2)
     private BigDecimal milk;
 
-    @Column(columnDefinition = "TEXT")
-    private String photo;
+//    @Column(columnDefinition = "TEXT")
+//    private String photo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
