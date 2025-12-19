@@ -127,4 +127,5 @@ public class Animal {
     public void setPhoto(String photo) {
         this.photo = photo;
     }
+
 }

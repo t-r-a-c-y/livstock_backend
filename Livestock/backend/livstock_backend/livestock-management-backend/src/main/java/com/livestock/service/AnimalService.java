@@ -12,7 +12,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;  // optional, for replace existing
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -123,26 +129,34 @@ public class AnimalService {
             throw new ResourceNotFoundException("Animal not found");
         }
 
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file is empty");
+        }
+
         try {
-            // Create upload directory if not exists
+            // Ensure upload directory exists
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // Generate unique filename
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            // Generate unique filename to avoid conflicts
+            String originalFilename = file.getOriginalFilename();
+            String filename = UUID.randomUUID().toString() + "_" + originalFilename;
             Path filePath = uploadPath.resolve(filename);
+
+            // Save the file
             Files.copy(file.getInputStream(), filePath);
 
-            // Save relative path or full URL
-            String photoUrl = "/uploads/" + filename;  // We'll serve it statically
+            // Save the relative URL in database
+            String photoUrl = "/uploads/" + filename;
             animal.setPhoto(photoUrl);
             animalRepository.save(animal);
 
             return mapToResponse(animal);
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload photo: " + e.getMessage());
+            throw new RuntimeException("Failed to upload photo: " + e.getMessage(), e);
         }
     }
 }
