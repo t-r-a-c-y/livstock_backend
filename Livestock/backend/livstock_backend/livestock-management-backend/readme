@@ -1,0 +1,131 @@
+
+Livestock Management Backend - README
+Overview
+This is a full-featured Spring Boot backend for a Livestock Management System. It provides complete CRUD operations for managing animals, owners, activities, financial records, users, notifications, and reports. The API is secured with JWT authentication and includes soft delete, file upload for animal photos, and interactive API documentation via Swagger.
+
+Tech Stack:
+
+Spring Boot 3.5.8
+Spring Data JPA (Hibernate)
+PostgreSQL
+JWT Authentication
+Flyway for database migrations
+ModelMapper for DTO mapping
+Springdoc OpenAPI (Swagger UI)
+Multipart file upload for animal photos
+Port: 8081 (default)
+
+Features
+JWT-based authentication
+Role-based access (admin/manager)
+Soft delete for all entities
+Animal photo upload
+Auto-generation of financial records from activities
+Filtering and search endpoints
+Notification system
+Report generation
+Swagger UI for API documentation
+Prerequisites
+Java 21
+Maven
+PostgreSQL 17+
+IDE (IntelliJ recommended)
+Setup Instructions
+1. Database Setup
+Install and start PostgreSQL
+Create a database named livestock_management:
+SQL
+CREATE DATABASE livestock_management;
+(Optional) Create extension for UUID:
+SQL
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+2. Project Configuration
+Clone the repository
+Open in your IDE
+Update src/main/resources/application.properties if needed:
+properties
+server.port=8081
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/livestock_management
+spring.datasource.username=postgres
+spring.datasource.password=your_password
+
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+
+# File upload
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+app.upload.dir=C:/livestock-uploads  # Change to your preferred path
+
+# JWT
+jwt.secret=your-very-long-secret-key-here-make-it-random-and-long
+jwt.expiration=86400000
+3. Create Upload Directory
+Create the folder for animal photos:
+
+Windows: C:\livestock-uploads
+Or change app.upload.dir to a path inside your project
+4. Run the Application
+Bash
+mvn spring-boot:run
+The app will:
+
+Apply Flyway migrations (create all tables)
+Start on http://localhost:8081
+API Documentation
+Swagger UI: http://localhost:8081/swagger-ui.html
+
+OpenAPI JSON: http://localhost:8081/v3/api-docs
+
+Tip: Open Swagger in incognito mode or disable ad-blockers if you see "Access denied".
+
+Default Admin User
+JSON
+Email: admin@farm.com
+Password: password
+Login endpoint: POST /api/auth/login
+
+Key Endpoints
+Auth
+POST /api/auth/login
+Owners
+GET /api/owners
+POST /api/owners
+Animals
+GET /api/animals
+POST /api/animals
+POST /api/animals/{id}/upload-photo (multipart/form-data)
+Activities
+POST /api/activities
+Financial Records
+GET /api/financial-records
+GET /api/financial-records/summary
+Notifications
+GET /api/notifications/unread-count
+Testing with Postman
+Import the Postman collection provided separately. It includes:
+
+Login flow
+All CRUD operations
+Animal photo upload
+Variables for JWT token and IDs
+File Upload (Animal Photos)
+Endpoint: POST /api/animals/{id}/upload-photo
+Form-data key: photo
+Images stored in directory specified by app.upload.dir
+Accessible at: http://localhost:8081/uploads/filename.jpg
+Security
+All endpoints except /api/auth/login require JWT token
+Token in header: Authorization: Bearer <token>
+Role-based access for admin features
+Troubleshooting
+Swagger blocked? Use incognito mode or disable ad-blockers
+Missing tables? Drop and recreate the database, then restart
+Upload directory issues? Ensure the path exists and is writable
+Future Enhancements
+Email notifications
+Advanced reporting with PDF export
+Dashboard statistics
+Mobile app integration
