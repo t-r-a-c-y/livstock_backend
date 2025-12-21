@@ -5,12 +5,16 @@ import com.livestock.dto.request.AnimalRequest;
 import com.livestock.dto.response.AnimalResponse;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.service.AnimalService;
+import com.lowagie.text.DocumentException;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,5 +71,22 @@ public class AnimalController {
 
         AnimalResponse updatedAnimal = animalService.uploadAnimalPhoto(id, photo);
         return ResponseEntity.ok(ApiResponse.success(updatedAnimal));
+    }
+    @GetMapping("/reports/animals/pdf")
+    public ResponseEntity<InputStreamResource> exportAnimalsPdf() throws DocumentException {
+        List<Object[]> animals = animalRepository.findAllForReport(); // Create this query
+
+        ByteArrayInputStream bis = pdfReportService.generateAnimalReport(animals);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=animal-report-" +
+                LocalDate.now() + ".pdf");
+        headers.add("Content-Type", "application/pdf");
+
+        InputStreamResource resource = new InputStreamResource(bis);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(resource);
     }
 }
