@@ -36,4 +36,8 @@ public interface AnimalRepository extends JpaRepository<Animal, UUID> {
             "AND (LOWER(a.tagId) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(a.breed) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Animal> searchByTagIdOrBreed(@Param("search") String search);
+
+    @Query("SELECT a.tagId, a.type, a.breed, a.gender, a.dateOfBirth, o.name, a.status, a.milk " +
+            "FROM Animal a LEFT JOIN a.owner o WHERE a.deletedAt IS NULL")
+    List<Object[]> findAllForReport();
 }
