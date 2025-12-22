@@ -1,5 +1,10 @@
 // src/main/java/com/livestock/controller/AnimalController.java
 package com.livestock.controller;
+import com.livestock.repository.AnimalRepository;
+import com.livestock.service.PdfReportService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.core.io.InputStreamResource;
+import java.time.LocalDate;
 
 import com.livestock.dto.request.AnimalRequest;
 import com.livestock.dto.response.AnimalResponse;
@@ -14,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.time.LocalDate;
+
 import java.util.List;
 import java.util.UUID;
 
