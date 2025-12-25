@@ -52,6 +52,27 @@ public class FinancialRecordController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(record));
     }
 
+    @GetMapping("/reports/financial/pdf")
+    public ResponseEntity<InputStreamResource> exportFinancialPdf() throws DocumentException {
+        var summary = financialRecordService.getSummary();
+
+        ByteArrayInputStream bis = pdfReportService.generateFinancialReport(
+                summary.totalIncome(),
+                summary.totalExpense(),
+                summary.profit()
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=financial-summary-" + LocalDate.now() + ".pdf");
+        headers.add("Content-Type", "application/pdf");
+
+        InputStreamResource resource = new InputStreamResource(bis);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(resource);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<FinancialRecordResponse>> updateRecord(
             @PathVariable UUID id, @Valid @RequestBody FinancialRecordRequest request) {

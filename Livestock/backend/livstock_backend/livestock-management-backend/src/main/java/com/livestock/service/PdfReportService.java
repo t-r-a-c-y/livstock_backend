@@ -1,9 +1,12 @@
 // src/main/java/com/livestock/service/PdfReportService.java
 package com.livestock.service;
 
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
-import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
