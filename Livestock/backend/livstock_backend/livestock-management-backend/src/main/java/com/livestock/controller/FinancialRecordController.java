@@ -1,6 +1,11 @@
 // src/main/java/com/livestock/controller/FinancialRecordController.java
 package com.livestock.controller;
 
+import com.lowagie.text.DocumentException;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import java.time.LocalDate;
+
 import com.livestock.dto.request.FinancialRecordRequest;
 import com.livestock.dto.response.FinancialRecordResponse;
 import com.livestock.dto.response.ApiResponse;
