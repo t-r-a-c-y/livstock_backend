@@ -132,18 +132,23 @@ public class PdfReportService {
     }
 
     private void addSummaryRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont, Color valueColor) {
-        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        // Label cell
+        Phrase labelPhrase = new Phrase(label, labelFont);
+        PdfPCell labelCell = new PdfPCell(labelPhrase);
         labelCell.setPadding(10);
         labelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         labelCell.setBorder(Rectangle.NO_BORDER);
         table.addCell(labelCell);
 
-        PdfPCell valueCell = new PdfPCell(new Phrase("KES " + value, valueFont));
+        // Value cell with colored text
+        Phrase valuePhrase = new Phrase("KES " + value, valueFont);
+        valuePhrase.setFont(valueFont); // Ensure font is applied
+        PdfPCell valueCell = new PdfPCell(valuePhrase);
         valueCell.setPadding(10);
         valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         valueCell.setBorder(Rectangle.NO_BORDER);
-        valueCell.setPhrase(new Phrase("KES " + value, valueFont));
-        valueCell.setTextColor(valueColor);
+        valueCell.setPhrase(valuePhrase); // Important
+        valueCell.setCellEvent(new CellBackgroundEvent(valueColor)); // We'll add this below
         table.addCell(valueCell);
     }
 
