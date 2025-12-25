@@ -5,6 +5,11 @@ import com.lowagie.text.DocumentException;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import java.time.LocalDate;
+import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
+import com.lowagie.text.DocumentException;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 
 import com.livestock.dto.request.FinancialRecordRequest;
 import com.livestock.dto.response.FinancialRecordResponse;
@@ -71,11 +76,9 @@ public class FinancialRecordController {
         headers.add("Content-Disposition", "attachment; filename=financial-summary-" + LocalDate.now() + ".pdf");
         headers.add("Content-Type", "application/pdf");
 
-        InputStreamResource resource = new InputStreamResource(bis);
-
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(resource);
+                .body(new InputStreamResource(bis));
     }
 
     @PutMapping("/{id}")

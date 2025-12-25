@@ -20,6 +20,7 @@ import java.util.List;
 @Service
 public class PdfReportService {
 
+
     public ByteArrayInputStream generateAnimalReport(List<Object[]> animals) throws DocumentException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4.rotate()); // Landscape for more columns
@@ -149,6 +150,8 @@ public class PdfReportService {
         valueCell.setCellEvent(new CellBackgroundEvent(valueColor)); // We'll add this below
         table.addCell(valueCell);
     }
+
+
 
 
     private static class CellBackgroundEvent implements PdfPCellEvent {
