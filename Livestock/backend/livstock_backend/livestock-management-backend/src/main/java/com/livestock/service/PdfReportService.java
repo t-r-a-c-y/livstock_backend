@@ -7,9 +7,7 @@ import java.time.LocalDate;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.*;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -150,6 +148,25 @@ public class PdfReportService {
         valueCell.setPhrase(valuePhrase); // Important
         valueCell.setCellEvent(new CellBackgroundEvent(valueColor)); // We'll add this below
         table.addCell(valueCell);
+    }
+
+
+    private static class CellBackgroundEvent implements PdfPCellEvent {
+        private Color color;
+
+        public CellBackgroundEvent(Color color) {
+            this.color = color;
+        }
+
+        @Override
+        public void cellLayout(PdfPCell cell, Rectangle position, PdfContentByte[] canvases) {
+            PdfContentByte cb = canvases[PdfPTable.BACKGROUNDCANVAS];
+            cb.saveState();
+            cb.setColorFill(color);
+            cb.rectangle(position.getLeft(), position.getBottom(), position.getWidth(), position.getHeight());
+            cb.fill();
+            cb.restoreState();
+        }
     }
 
     private void addTableHeader(PdfPTable table, String headerTitle, Font font) {
