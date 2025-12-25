@@ -73,6 +73,74 @@ public class PdfReportService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
+    public ByteArrayInputStream generateFinancialReport(BigDecimal totalIncome, BigDecimal totalExpense, BigDecimal profit) throws DocumentException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, out);
+
+        document.open();
+
+        // Title
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+        Paragraph title = new Paragraph("Financial Summary Report", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(30);
+        document.add(title);
+
+        // Generation Date
+        Font dateFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 12);
+        Paragraph date = new Paragraph("Generated on: " + LocalDate.now(), dateFont);
+        date.setAlignment(Element.ALIGN_CENTER);
+        date.setSpacingAfter(40);
+        document.add(date);
+
+        // Summary Table
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(60);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.setSpacingBefore(20);
+
+        float[] columnWidths = {2f, 1f};
+        table.setWidths(columnWidths);
+
+        Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+        Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 14);
+
+        addSummaryRow(table, "Total Income", totalIncome.toString(), labelFont, valueFont, new Color(0, 128, 0));   // Green
+        addSummaryRow(table, "Total Expenses", totalExpense.toString(), labelFont, valueFont, new Color(255, 0, 0)); // Red
+        addSummaryRow(table, "Net Profit", profit.toString(), labelFont, valueFont, new Color(0, 0, 255));         // Blue
+
+        document.add(table);
+
+        // Profit Highlight
+        Font profitFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+        Paragraph profitText = new Paragraph("\nNet " + (profit.compareTo(BigDecimal.ZERO) >= 0 ? "Profit" : "Loss") + ": " + profit.abs() + " KES",
+                profitFont);
+        profitText.setAlignment(Element.ALIGN_CENTER);
+        profitText.setSpacingBefore(40);
+        document.add(profitText);
+
+        document.close();
+
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    private void addSummaryRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont, Color valueColor) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setPadding(10);
+        labelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase("KES " + value, valueFont));
+        valueCell.setPadding(10);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setPhrase(new Phrase("KES " + value, valueFont));
+        valueCell.setTextColor(valueColor);
+        table.addCell(valueCell);
+    }
+
     private void addTableHeader(PdfPTable table, String headerTitle, Font font) {
         PdfPCell header = new PdfPCell();
         header.setBackgroundColor(new Color(0, 102, 204));
