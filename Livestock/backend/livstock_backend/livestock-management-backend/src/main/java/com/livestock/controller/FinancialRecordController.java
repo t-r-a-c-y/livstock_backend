@@ -31,14 +31,17 @@ import java.util.UUID;
 public class FinancialRecordController {
 
     private final FinancialRecordService financialRecordService;
+    private final PdfReportService pdfReportService;  // ← Declared
 
-    private final PdfReportService pdfReportService;  // ← ADD THIS LINE
-
+    // ← Correct constructor with assignment
     public FinancialRecordController(FinancialRecordService financialRecordService,
-                                     PdfReportService pdfReportService) {  // Already updated
+                                     PdfReportService pdfReportService) {
         this.financialRecordService = financialRecordService;
-        this.pdfReportService = pdfReportService;
+        this.pdfReportService = pdfReportService;  // ← THIS LINE WAS MISSING!
     }
+
+
+
 
 // ... rest of the class remains the same
 
