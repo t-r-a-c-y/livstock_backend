@@ -1,6 +1,7 @@
 // src/main/java/com/livestock/controller/FinancialRecordController.java
 package com.livestock.controller;
 
+import com.livestock.service.PdfReportService;
 import com.lowagie.text.DocumentException;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,16 @@ import java.util.UUID;
 public class FinancialRecordController {
 
     private final FinancialRecordService financialRecordService;
+
+    private final PdfReportService pdfReportService;  // ← ADD THIS LINE
+
+    public FinancialRecordController(FinancialRecordService financialRecordService,
+                                     PdfReportService pdfReportService) {  // Already updated
+        this.financialRecordService = financialRecordService;
+        this.pdfReportService = pdfReportService;
+    }
+
+// ... rest of the class remains the same
 
     // Explicit constructor — fixes injection error
     public FinancialRecordController(FinancialRecordService financialRecordService) {
