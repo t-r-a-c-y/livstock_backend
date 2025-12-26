@@ -1,27 +1,22 @@
 // src/main/java/com/livestock/controller/FinancialRecordController.java
 package com.livestock.controller;
 
-import com.livestock.service.PdfReportService;
-import com.lowagie.text.DocumentException;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import java.time.LocalDate;
-import java.io.ByteArrayInputStream;
-import java.time.LocalDate;
-import com.lowagie.text.DocumentException;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-
 import com.livestock.dto.request.FinancialRecordRequest;
 import com.livestock.dto.response.FinancialRecordResponse;
 import com.livestock.dto.response.ApiResponse;
 import com.livestock.service.FinancialRecordService;
+import com.livestock.service.PdfReportService;
+import com.lowagie.text.DocumentException;
 import jakarta.validation.Valid;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -31,23 +26,13 @@ import java.util.UUID;
 public class FinancialRecordController {
 
     private final FinancialRecordService financialRecordService;
-    private final PdfReportService pdfReportService;  // ← Declared
+    private final PdfReportService pdfReportService;
 
-    // ← Correct constructor with assignment
+    // SINGLE CONSTRUCTOR — Inject both services
     public FinancialRecordController(FinancialRecordService financialRecordService,
                                      PdfReportService pdfReportService) {
         this.financialRecordService = financialRecordService;
-        this.pdfReportService = pdfReportService;  // ← THIS LINE WAS MISSING!
-    }
-
-
-
-
-// ... rest of the class remains the same
-
-    // Explicit constructor — fixes injection error
-    public FinancialRecordController(FinancialRecordService financialRecordService) {
-        this.financialRecordService = financialRecordService;
+        this.pdfReportService = pdfReportService;
     }
 
     @GetMapping
@@ -76,6 +61,19 @@ public class FinancialRecordController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(record));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<FinancialRecordResponse>> updateRecord(
+            @PathVariable UUID id, @Valid @RequestBody FinancialRecordRequest request) {
+        FinancialRecordResponse record = financialRecordService.updateFinancialRecord(id, request);
+        return ResponseEntity.ok(ApiResponse.success(record));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteRecord(@PathVariable UUID id) {
+        financialRecordService.deleteFinancialRecord(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
     @GetMapping("/reports/financial/pdf")
     public ResponseEntity<InputStreamResource> exportFinancialPdf() throws DocumentException {
         var summary = financialRecordService.getSummary();
@@ -93,18 +91,5 @@ public class FinancialRecordController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(new InputStreamResource(bis));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<FinancialRecordResponse>> updateRecord(
-            @PathVariable UUID id, @Valid @RequestBody FinancialRecordRequest request) {
-        FinancialRecordResponse record = financialRecordService.updateFinancialRecord(id, request);
-        return ResponseEntity.ok(ApiResponse.success(record));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteRecord(@PathVariable UUID id) {
-        financialRecordService.deleteFinancialRecord(id);
-        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
