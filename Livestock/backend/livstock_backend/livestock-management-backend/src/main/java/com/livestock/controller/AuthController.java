@@ -19,10 +19,29 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
-
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            User user = (User) authentication.getPrincipal();
+            String token = jwtTokenProvider.generateToken(user);
+
+            LoginResponse response = new LoginResponse(token);
+            return ResponseEntity.ok(ApiResponse.success(response));
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Invalid email or password"));
+        } catch (DisabledException e) {
+            return ResponseEntity.status(401).body(ApiResponse.error("User account is inactive"));
+        } catch (Exception e) {
+            e.printStackTrace();  // This will show the real error in console
+            return ResponseEntity.status(500).body(ApiResponse.error("Server error: " + e.getMessage()));
+        }
     }
+
+
 }
