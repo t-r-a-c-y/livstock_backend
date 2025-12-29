@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+
+import io.swagger.v3.oas.annotations.Hidden;
+
+@Hidden  // ← ADD THIS LINE
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
