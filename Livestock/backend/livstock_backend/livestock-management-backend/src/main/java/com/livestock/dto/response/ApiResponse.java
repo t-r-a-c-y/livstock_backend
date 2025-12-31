@@ -63,7 +63,7 @@ public class ApiResponse<T> {
         }
     }
 
-    // --- Static helper methods (used in controllers) ---
+
     public static <T> ApiResponse<T> success(T data) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setData(data);
