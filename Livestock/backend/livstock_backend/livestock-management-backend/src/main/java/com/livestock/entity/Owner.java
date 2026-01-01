@@ -2,6 +2,8 @@
 package com.livestock.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,37 +16,54 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Owner {
 
+    @NotBlank
+    private String name;
+
+    @NotBlank
+    @Email
+    private String email;
+
+    @NotBlank
+    private String phone;
+
+    // Optional fields - no @NotBlank
+    private String address;
+    private String avatar;
+    private String nationalId;
+    private String bankAccount;
+    private String emergencyContact;
+    private String notes;
     @Id
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false, length = 255)
-    private String name;
-
-    @Column(unique = true, nullable = false, length = 255)
-    private String email;
-
-    @Column(nullable = false, length = 50)
-    private String phone;
-
-    @Column(columnDefinition = "TEXT")
-    private String address;
-
+//    @Column(nullable = false, length = 255)
+//    private String name;
+//
+//    @Column(unique = true, nullable = false, length = 255)
+//    private String email;
+//
+//    @Column(nullable = false, length = 50)
+//    private String phone;
+//
 //    @Column(columnDefinition = "TEXT")
-//    private String avatar;
-   private String avatar = "";  // default empty
-
-    @Column(name = "national_id", length = 100)
-    private String nationalId;
-
-    @Column(name = "bank_account", length = 100)
-    private String bankAccount;
-
-    @Column(name = "emergency_contact", length = 255)
-    private String emergencyContact;
-
-    @Column(columnDefinition = "TEXT")
-    private String notes;
+//    private String address;
+//
+////    @Column(columnDefinition = "TEXT")
+////    private String avatar;
+//   private String avatar = "";  // default empty
+//
+//    @Column(name = "national_id", length = 100)
+//    private String nationalId;
+//
+//    @Column(name = "bank_account", length = 100)
+//    private String bankAccount;
+//
+//    @Column(name = "emergency_contact", length = 255)
+//    private String emergencyContact;
+//
+//    @Column(columnDefinition = "TEXT")
+//    private String notes;
 
 
 
