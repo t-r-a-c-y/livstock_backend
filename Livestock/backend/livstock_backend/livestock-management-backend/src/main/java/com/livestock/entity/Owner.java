@@ -30,8 +30,9 @@ public class Owner {
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    @Column(columnDefinition = "TEXT")
-    private String avatar;
+//    @Column(columnDefinition = "TEXT")
+//    private String avatar;
+   private String avatar = "";  // default empty
 
     @Column(name = "national_id", length = 100)
     private String nationalId;
@@ -44,6 +45,8 @@ public class Owner {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
