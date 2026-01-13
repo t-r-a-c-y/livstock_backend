@@ -37,7 +37,7 @@ public class OwnerController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
+    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner( @RequestBody OwnerRequest request) {
         OwnerResponse owner = ownerService.createOwner(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(owner));
     }
