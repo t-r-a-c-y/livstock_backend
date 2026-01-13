@@ -4,6 +4,7 @@ package com.livestock.controller;
 import com.livestock.dto.request.OwnerRequest;
 import com.livestock.dto.response.OwnerResponse;
 import com.livestock.dto.response.ApiResponse;
+import com.livestock.entity.Owner;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -39,10 +40,11 @@ public class OwnerController {
     @PostMapping
     public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
         try {
-            OwnerResponse owner = ownerService.createOwner(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(owner));
+            Owner owner = ownerService.createOwner(request);
+            OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
         } catch (Exception e) {
-            e.printStackTrace(); // This will show the real error in console!
+            e.printStackTrace(); // ← This prints the REAL error in console!
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Internal server error: " + e.getMessage(), "SERVER_ERROR"));
         }
