@@ -1,4 +1,3 @@
-// src/main/java/com/livestock/controller/OwnerController.java
 package com.livestock.controller;
 
 import com.livestock.dto.request.OwnerRequest;
@@ -7,54 +6,58 @@ import com.livestock.dto.response.ApiResponse;
 import com.livestock.entity.Owner;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/owners")
+@RequiredArgsConstructor  // This auto-injects all final fields
 public class OwnerController {
 
     private final OwnerService ownerService;
+    private final ModelMapper modelMapper;  // ← Injected now
 
-    // Explicit constructor — fixes "not initialized" error
-    public OwnerController(OwnerService ownerService) {
-        this.ownerService = ownerService;
+    @PostMapping
+    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
+        Owner owner = ownerService.createOwner(request);  // Service returns Owner entity
+
+        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);  // Map entity to DTO
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
-        List<OwnerResponse> owners = ownerService.getAllOwners();
-        return ResponseEntity.ok(ApiResponse.success(owners));
+        List<Owner> owners = ownerService.getAllOwners();
+
+        List<OwnerResponse> responses = owners.stream()
+                .map(owner -> modelMapper.map(owner, OwnerResponse.class))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OwnerResponse>> getOwner(@PathVariable UUID id) {
-        OwnerResponse owner = ownerService.getOwnerById(id);
-        return ResponseEntity.ok(ApiResponse.success(owner));
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
-        try {
-            Owner owner = ownerService.createOwner(request);
-            OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
-        } catch (Exception e) {
-            e.printStackTrace(); // ← This prints the REAL error in console!
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), "SERVER_ERROR"));
-        }
+    public ResponseEntity<ApiResponse<OwnerResponse>> getOwnerById(@PathVariable UUID id) {
+        Owner owner = ownerService.getOwnerById(id);
+        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(
             @PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
-        OwnerResponse owner = ownerService.updateOwner(id, request);
-        return ResponseEntity.ok(ApiResponse.success(owner));
+        Owner updated = ownerService.updateOwner(id, request);
+        OwnerResponse response = modelMapper.map(updated, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{id}")
