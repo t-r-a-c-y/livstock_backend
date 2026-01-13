@@ -5,19 +5,19 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-@Data
 public class OwnerRequest {
-    @NotBlank
+    @NotBlank(message = "Name is required")
     private String name;
 
-    @Email @NotBlank
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "Phone is required")
     private String phone;
 
     private String address;
-    private String avatar;
+    private String avatar;           // ← No @NotBlank here
     private String nationalId;
     private String bankAccount;
     private String emergencyContact;
