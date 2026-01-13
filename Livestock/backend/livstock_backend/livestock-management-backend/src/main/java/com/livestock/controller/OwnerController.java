@@ -26,42 +26,42 @@ public class OwnerController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
-        // Service creates and returns the entity
+        // Service returns Owner (entity)
         Owner createdOwner = ownerService.createOwner(request);
 
-        // Map entity → DTO for response
-        OwnerResponse responseDto = modelMapper.map(createdOwner, OwnerResponse.class);
+        // Convert entity → DTO for response
+        OwnerResponse response = modelMapper.map(createdOwner, OwnerResponse.class);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(responseDto));
+                .body(ApiResponse.success(response));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
-        // Service returns list of entities
+        // Service returns List<Owner> (entities)
         List<Owner> owners = ownerService.getAllOwners();
 
-        // Map each entity to DTO
-        List<OwnerResponse> responseDtos = owners.stream()
+        // Convert each entity → DTO
+        List<OwnerResponse> responses = owners.stream()
                 .map(owner -> modelMapper.map(owner, OwnerResponse.class))
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(ApiResponse.success(responseDtos));
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OwnerResponse>> getOwnerById(@PathVariable UUID id) {
         Owner owner = ownerService.getOwnerById(id);
-        OwnerResponse responseDto = modelMapper.map(owner, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(
             @PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
         Owner updatedOwner = ownerService.updateOwner(id, request);
-        OwnerResponse responseDto = modelMapper.map(updatedOwner, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        OwnerResponse response = modelMapper.map(updatedOwner, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{id}")
