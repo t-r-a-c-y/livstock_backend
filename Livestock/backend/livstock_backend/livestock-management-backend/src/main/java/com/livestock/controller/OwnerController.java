@@ -18,46 +18,50 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/owners")
-@RequiredArgsConstructor  // This auto-injects all final fields
+@RequiredArgsConstructor
 public class OwnerController {
 
     private final OwnerService ownerService;
-    private final ModelMapper modelMapper;  // ← Injected now
+    private final ModelMapper modelMapper;
 
     @PostMapping
     public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
-        Owner owner = ownerService.createOwner(request);  // Service returns Owner entity
+        // Service creates and returns the entity
+        Owner createdOwner = ownerService.createOwner(request);
 
-        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);  // Map entity to DTO
+        // Map entity → DTO for response
+        OwnerResponse responseDto = modelMapper.map(createdOwner, OwnerResponse.class);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+                .body(ApiResponse.success(responseDto));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
+        // Service returns list of entities
         List<Owner> owners = ownerService.getAllOwners();
 
-        List<OwnerResponse> responses = owners.stream()
+        // Map each entity to DTO
+        List<OwnerResponse> responseDtos = owners.stream()
                 .map(owner -> modelMapper.map(owner, OwnerResponse.class))
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(responseDtos));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OwnerResponse>> getOwnerById(@PathVariable UUID id) {
         Owner owner = ownerService.getOwnerById(id);
-        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        OwnerResponse responseDto = modelMapper.map(owner, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(
             @PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
-        Owner updated = ownerService.updateOwner(id, request);
-        OwnerResponse response = modelMapper.map(updated, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Owner updatedOwner = ownerService.updateOwner(id, request);
+        OwnerResponse responseDto = modelMapper.map(updatedOwner, OwnerResponse.class);
+        return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @DeleteMapping("/{id}")
