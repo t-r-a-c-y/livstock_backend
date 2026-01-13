@@ -37,9 +37,15 @@ public class OwnerController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner( @RequestBody OwnerRequest request) {
-        OwnerResponse owner = ownerService.createOwner(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(owner));
+    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
+        try {
+            OwnerResponse owner = ownerService.createOwner(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(owner));
+        } catch (Exception e) {
+            e.printStackTrace(); // This will show the real error in console!
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), "SERVER_ERROR"));
+        }
     }
 
     @PutMapping("/{id}")
