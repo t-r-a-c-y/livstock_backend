@@ -3,6 +3,7 @@ package com.livestock.controller;
 import com.livestock.dto.request.OwnerRequest;
 import com.livestock.dto.response.OwnerResponse;
 import com.livestock.dto.response.ApiResponse;
+import com.livestock.entity.Owner;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
