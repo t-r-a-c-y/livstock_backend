@@ -6,7 +6,7 @@ import com.livestock.dto.response.ApiResponse;
 import com.livestock.entity.Owner;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import lombok.RequiredArgsArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,26 +26,17 @@ public class OwnerController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
-        // Service returns Owner (entity)
         Owner createdOwner = ownerService.createOwner(request);
-
-        // Convert entity → DTO for response
         OwnerResponse response = modelMapper.map(createdOwner, OwnerResponse.class);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
-        // Service returns List<Owner> (entities)
         List<Owner> owners = ownerService.getAllOwners();
-
-        // Convert each entity → DTO
         List<OwnerResponse> responses = owners.stream()
                 .map(owner -> modelMapper.map(owner, OwnerResponse.class))
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
@@ -57,8 +48,7 @@ public class OwnerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(
-            @PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
+    public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(@PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
         Owner updatedOwner = ownerService.updateOwner(id, request);
         OwnerResponse response = modelMapper.map(updatedOwner, OwnerResponse.class);
         return ResponseEntity.ok(ApiResponse.success(response));
