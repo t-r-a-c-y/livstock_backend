@@ -3,7 +3,6 @@ package com.livestock.controller;
 import com.livestock.dto.request.OwnerRequest;
 import com.livestock.dto.response.OwnerResponse;
 import com.livestock.dto.response.ApiResponse;
-import com.livestock.entity.Owner;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/owners")
-@RequiredArgsConstructor  // ← FIXED TYPO: one "Args"
+@RequiredArgsConstructor
 public class OwnerController {
 
     private final OwnerService ownerService;
@@ -35,7 +34,7 @@ public class OwnerController {
     public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
         List<Owner> owners = ownerService.getAllOwners();
         List<OwnerResponse> responses = owners.stream()
-                .map(owner -> modelMapper.map(owner, OwnerResponse.class))
+                .map(o -> modelMapper.map(o, OwnerResponse.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
