@@ -1,11 +1,12 @@
-// src/main/java/com/livestock/dto/request/OwnerRequest.java
 package com.livestock.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+@Data
 public class OwnerRequest {
+
     @NotBlank(message = "Name is required")
     private String name;
 
@@ -17,7 +18,7 @@ public class OwnerRequest {
     private String phone;
 
     private String address;
-    private String avatar;           // ← No @NotBlank here
+    private String avatar;
     private String nationalId;
     private String bankAccount;
     private String emergencyContact;
