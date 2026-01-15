@@ -1,8 +1,6 @@
-// src/main/java/com/livestock/dto/response/OwnerResponse.java
 package com.livestock.dto.response;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
