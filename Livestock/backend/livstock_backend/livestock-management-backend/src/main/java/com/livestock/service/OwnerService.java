@@ -19,6 +19,7 @@ public class OwnerService {
     private final OwnerRepository ownerRepository;
     private final ModelMapper modelMapper;
 
+
     public OwnerService(OwnerRepository ownerRepository, ModelMapper modelMapper) {
         this.ownerRepository = ownerRepository;
         this.modelMapper = modelMapper;
