@@ -11,9 +11,9 @@ import java.util.UUID;
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, UUID> {
 
-    // Find all active (not deleted) owners
+    // Find all active owners (soft delete)
     List<Owner> findAllByDeletedAtIsNull();
 
-    // Find one active owner by ID
+    // Find one active owner by ID (soft delete)
     Optional<Owner> findByIdAndDeletedAtIsNull(UUID id);
 }
