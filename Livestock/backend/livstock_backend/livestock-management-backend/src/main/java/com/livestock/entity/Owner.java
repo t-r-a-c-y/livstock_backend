@@ -7,10 +7,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "owners")
-@Data               // Generates getters, setters, toString, equals, hashCode
+@Data                       // Generates ALL getters + setters
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder            // Optional, but very useful
+@Builder
 public class Owner {
 
     @Id
@@ -53,12 +53,7 @@ public class Owner {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // Explicit setters for updatedAt and deletedAt (in case Lombok @Data doesn't work)
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
+    // Explicit getters as backup (in case Lombok annotation processor fails)
+    public UUID getId() { return id; }
+    public String getName() { return name; }
 }
