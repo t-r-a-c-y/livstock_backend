@@ -68,8 +68,8 @@ public class FinancialRecordService {
     }
 
     public FinancialRecordResponse createFinancialRecord(FinancialRecordRequest request) {
-        Owner owner = request.getOwnerId() != null ?
-                ownerRepository.findActiveById(request.getOwnerId()) : null;
+        Owner owner = ownerRepository.findByIdAndDeletedAtIsNull(ownerId)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
         Animal animal = request.getAnimalId() != null ?
                 animalRepository.findActiveById(request.getAnimalId()) : null;
 
