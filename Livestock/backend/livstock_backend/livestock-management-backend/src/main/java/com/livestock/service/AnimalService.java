@@ -67,10 +67,8 @@ public class AnimalService {
     }
 
     public AnimalResponse createAnimal(AnimalRequest request) {
-        Owner owner = ownerRepository.findActiveById(request.getOwnerId());
-        if (owner == null) {
-            throw new ResourceNotFoundException("Owner not found");
-        }
+        Owner owner = ownerRepository.findByIdAndDeletedAtIsNull(ownerId)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
 
         Animal animal = modelMapper.map(request, Animal.class);
         animal.setOwner(owner);
