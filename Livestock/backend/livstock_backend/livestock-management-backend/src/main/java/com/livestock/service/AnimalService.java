@@ -29,14 +29,28 @@ public class AnimalService {
 
         Animal animal = modelMapper.map(request, Animal.class);
         animal.setOwner(owner);
-        animal.setOwnerName(owner.getName());
+        animal.setOwnerName(owner.getName());  // Assumes Animal has setOwnerName(String)
 
         Animal saved = animalRepository.save(animal);
         return modelMapper.map(saved, AnimalResponse.class);
     }
 
-    public List<AnimalResponse> getAllAnimals() {
+    public List<AnimalResponse> getAllAnimals(String status, String type, UUID ownerId, String search) {
+        // Implement filtering logic here (example simple version)
         List<Animal> animals = animalRepository.findAllByDeletedAtIsNull();
+
+        // Apply filters (you can enhance this with JPA Specifications later)
+        if (status != null) animals = animals.stream().filter(a -> a.getStatus().equals(status)).collect(Collectors.toList());
+        if (type != null) animals = animals.stream().filter(a -> a.getType().equals(type)).collect(Collectors.toList());
+        if (ownerId != null) animals = animals.stream().filter(a -> a.getOwner().getId().equals(ownerId)).collect(Collectors.toList());
+        if (search != null) {
+            String lowerSearch = search.toLowerCase();
+            animals = animals.stream()
+                    .filter(a -> a.getTagId().toLowerCase().contains(lowerSearch) ||
+                            a.getBreed().toLowerCase().contains(lowerSearch))
+                    .collect(Collectors.toList());
+        }
+
         return animals.stream()
                 .map(a -> modelMapper.map(a, AnimalResponse.class))
                 .collect(Collectors.toList());

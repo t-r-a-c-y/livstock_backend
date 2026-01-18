@@ -14,4 +14,5 @@ public interface OwnerRepository extends JpaRepository<Owner, UUID> {
     List<Owner> findAllByDeletedAtIsNull();
 
     Optional<Owner> findByIdAndDeletedAtIsNull(UUID id);
+
 }
