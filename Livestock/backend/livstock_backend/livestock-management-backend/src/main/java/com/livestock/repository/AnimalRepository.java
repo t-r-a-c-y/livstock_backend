@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -19,6 +20,9 @@ public interface AnimalRepository extends JpaRepository<Animal, UUID> {
 
     @Query("SELECT a FROM Animal a WHERE a.deletedAt IS NULL AND a.id = :id")
     Animal findActiveById(@Param("id") UUID id);
+    List<Animal> findAllByDeletedAtIsNull();
+
+    Optional<Animal> findByIdAndDeletedAtIsNull(UUID id);
 
     // Filters used by frontend
     List<Animal> findByOwnerIdAndDeletedAtIsNull(UUID ownerId);
