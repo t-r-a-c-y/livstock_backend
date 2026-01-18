@@ -29,25 +29,29 @@ public class AnimalService {
 
         Animal animal = modelMapper.map(request, Animal.class);
         animal.setOwner(owner);
-        animal.setOwnerName(owner.getName());  // Assumes Animal has setOwnerName(String)
+        animal.setOwnerName(owner.getName());
 
         Animal saved = animalRepository.save(animal);
         return modelMapper.map(saved, AnimalResponse.class);
     }
 
     public List<AnimalResponse> getAllAnimals(String status, String type, UUID ownerId, String search) {
-        // Implement filtering logic here (example simple version)
         List<Animal> animals = animalRepository.findAllByDeletedAtIsNull();
 
-        // Apply filters (you can enhance this with JPA Specifications later)
-        if (status != null) animals = animals.stream().filter(a -> a.getStatus().equals(status)).collect(Collectors.toList());
-        if (type != null) animals = animals.stream().filter(a -> a.getType().equals(type)).collect(Collectors.toList());
-        if (ownerId != null) animals = animals.stream().filter(a -> a.getOwner().getId().equals(ownerId)).collect(Collectors.toList());
+        if (status != null) {
+            animals = animals.stream().filter(a -> status.equals(a.getStatus())).collect(Collectors.toList());
+        }
+        if (type != null) {
+            animals = animals.stream().filter(a -> type.equals(a.getType())).collect(Collectors.toList());
+        }
+        if (ownerId != null) {
+            animals = animals.stream().filter(a -> ownerId.equals(a.getOwner().getId())).collect(Collectors.toList());
+        }
         if (search != null) {
-            String lowerSearch = search.toLowerCase();
+            String lower = search.toLowerCase();
             animals = animals.stream()
-                    .filter(a -> a.getTagId().toLowerCase().contains(lowerSearch) ||
-                            a.getBreed().toLowerCase().contains(lowerSearch))
+                    .filter(a -> a.getTagId().toLowerCase().contains(lower) ||
+                            a.getBreed().toLowerCase().contains(lower))
                     .collect(Collectors.toList());
         }
 
@@ -58,25 +62,36 @@ public class AnimalService {
 
     public AnimalResponse getAnimalById(UUID id) {
         Animal animal = animalRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Animal not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Animal not found"));
         return modelMapper.map(animal, AnimalResponse.class);
     }
 
     public AnimalResponse updateAnimal(UUID id, AnimalRequest request) {
         Animal existing = animalRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Animal not found with id: " + id));
-
+                .orElseThrow(() -> new RuntimeException("Animal not found"));
         modelMapper.map(request, existing);
         existing.setUpdatedAt(LocalDateTime.now());
-
         Animal updated = animalRepository.save(existing);
         return modelMapper.map(updated, AnimalResponse.class);
     }
 
     public void deleteAnimal(UUID id) {
         Animal animal = animalRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Animal not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Animal not found"));
         animal.setDeletedAt(LocalDateTime.now());
         animalRepository.save(animal);
+    }
+
+    // Add this method for photo upload
+    public AnimalResponse uploadAnimalPhoto(UUID id, MultipartFile photo) {
+        Animal animal = animalRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new RuntimeException("Animal not found"));
+        // Implement photo upload logic here (e.g. save file, update animal.photo)
+        // For example:
+        // String photoPath = uploadFile(photo);
+        // animal.setPhoto(photoPath);
+        animal.setUpdatedAt(LocalDateTime.now());
+        Animal updated = animalRepository.save(animal);
+        return modelMapper.map(updated, AnimalResponse.class);
     }
 }
