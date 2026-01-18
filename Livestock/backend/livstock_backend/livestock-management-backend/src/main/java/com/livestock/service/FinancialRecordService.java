@@ -27,7 +27,7 @@ public class FinancialRecordService {
         Owner owner = null;
         if (ownerId != null) {
             owner = ownerRepository.findByIdAndDeletedAtIsNull(ownerId)
-                    .orElseThrow(() -> new RuntimeException("Owner not found with id: " + ownerId));
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
         }
 
         FinancialRecord record = modelMapper.map(request, FinancialRecord.class);
@@ -43,13 +43,12 @@ public class FinancialRecordService {
     public List<FinancialRecordResponse> getAllFinancialRecords(String type, String category, LocalDateTime from, LocalDateTime to, UUID ownerId, UUID animalId) {
         List<FinancialRecord> records = financialRecordRepository.findAllByDeletedAtIsNull();
 
-        // Apply filters (simple example - enhance with JPA Specifications later)
-        if (type != null) records = records.stream().filter(r -> r.getType().equals(type)).collect(Collectors.toList());
-        if (category != null) records = records.stream().filter(r -> r.getCategory().equals(category)).collect(Collectors.toList());
+        if (type != null) records = records.stream().filter(r -> type.equals(r.getType())).collect(Collectors.toList());
+        if (category != null) records = records.stream().filter(r -> category.equals(r.getCategory())).collect(Collectors.toList());
         if (from != null) records = records.stream().filter(r -> r.getDate().isAfter(from)).collect(Collectors.toList());
         if (to != null) records = records.stream().filter(r -> r.getDate().isBefore(to)).collect(Collectors.toList());
-        if (ownerId != null) records = records.stream().filter(r -> r.getOwner() != null && r.getOwner().getId().equals(ownerId)).collect(Collectors.toList());
-        if (animalId != null) records = records.stream().filter(r -> r.getAnimalId() != null && r.getAnimalId().equals(animalId)).collect(Collectors.toList());
+        if (ownerId != null) records = records.stream().filter(r -> r.getOwner() != null && ownerId.equals(r.getOwner().getId())).collect(Collectors.toList());
+        if (animalId != null) records = records.stream().filter(r -> animalId.equals(r.getAnimalId())).collect(Collectors.toList());
 
         return records.stream()
                 .map(r -> modelMapper.map(r, FinancialRecordResponse.class))
@@ -58,25 +57,29 @@ public class FinancialRecordService {
 
     public FinancialRecordResponse getFinancialRecordById(UUID id) {
         FinancialRecord record = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Financial record not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Record not found"));
         return modelMapper.map(record, FinancialRecordResponse.class);
     }
 
     public FinancialRecordResponse updateFinancialRecord(UUID id, FinancialRecordRequest request) {
         FinancialRecord existing = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Financial record not found with id: " + id));
-
+                .orElseThrow(() -> new RuntimeException("Record not found"));
         modelMapper.map(request, existing);
         existing.setUpdatedAt(LocalDateTime.now());
-
         FinancialRecord updated = financialRecordRepository.save(existing);
         return modelMapper.map(updated, FinancialRecordResponse.class);
     }
 
     public void deleteFinancialRecord(UUID id) {
         FinancialRecord record = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Financial record not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Record not found"));
         record.setDeletedAt(LocalDateTime.now());
         financialRecordRepository.save(record);
+    }
+
+    // Add this if you want summary (you can implement it later)
+    public Object getSummary() {
+        // Implement logic for total income, expense, profit
+        return null; // Placeholder
     }
 }
