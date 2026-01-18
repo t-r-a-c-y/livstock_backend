@@ -128,4 +128,7 @@ public class Animal {
         this.photo = photo;
     }
 
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
 }
