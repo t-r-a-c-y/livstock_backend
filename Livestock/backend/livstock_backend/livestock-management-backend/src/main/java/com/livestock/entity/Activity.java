@@ -1,66 +1,59 @@
-// src/main/java/com/livestock/entity/Activity.java
 package com.livestock.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+
+import com.livestockmis.backend.enums.*;
 
 @Entity
 @Table(name = "activities")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class Activity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 50)
-    private String type; // milking, birth, death, illness, treatment, sale, vaccination
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ActivityType type;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
-    private LocalDateTime date;
+    private LocalDate date;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 12, scale = 2)
     private BigDecimal cost;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_by", nullable = false, length = 255)
-    private String createdBy; // You can change to User reference later
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-
-
-    // In src/main/java/com/livestock/entity/Activity.java
-
-    @ManyToMany(mappedBy = "activities")
-    private List<Animal> animals = new ArrayList<>();
-
-    // Add these methods
-    public List<Animal> getAnimals() {
-        return animals;
-    }
-
-    public void setAnimals(List<Animal> animals) {
-        this.animals = animals;
-    }
+    @ManyToMany
+    @JoinTable(
+            name = "activity_animals",
+            joinColumns = @JoinColumn(name = "activity_id"),
+            inverseJoinColumns = @JoinColumn(name = "animal_id")
+    )
+    private Set<Animal> animals = new HashSet<>();
 }
