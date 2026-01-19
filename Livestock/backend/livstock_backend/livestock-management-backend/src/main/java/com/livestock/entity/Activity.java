@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.livestockmis.backend.enums.*;
+
 
 @Entity
 @Table(name = "activities")
