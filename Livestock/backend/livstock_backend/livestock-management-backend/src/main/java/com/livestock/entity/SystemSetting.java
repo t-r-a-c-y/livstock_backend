@@ -1,32 +1,55 @@
-// src/main/java/com/livestock/entity/SystemSetting.java
-package com.livestock.entity;
+// SystemSetting.java
+package com.livestockmis.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "system_settings")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class SystemSetting {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(unique = true, nullable = false, length = 100)
-    private String key;
+    @Column(length = 150)
+    private String organizationName = "LivestockMIS Farm";
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String value;
+    @Column(length = 10)
+    private String language = "en";
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(length = 50)
+    private String timezone = "UTC-05:00";
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(length = 10)
+    private String currency = "USD";
+
+    @Column(length = 20)
+    private String dateFormat = "MM/DD/YYYY";
+
+    @Column(length = 20)
+    private String theme = "light";
+
+    @Column(length = 120)
+    private String notificationEmail;
+
+    @Column(nullable = false)
+    private boolean emailReports = true;
+
+    @Column(nullable = false)
+    private boolean mobileNotifications = true;
+
+    @Column(nullable = false)
+    private boolean autoBackup = true;
+
+    @Column(nullable = false)
+    private int dataRetention = 12; // in months
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
