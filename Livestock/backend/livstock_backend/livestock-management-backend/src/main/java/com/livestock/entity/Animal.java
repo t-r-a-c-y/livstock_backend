@@ -1,6 +1,9 @@
 package com.livestock.entity;
 
 
+import com.livestock.entity.enums.AnimalStatus;
+import com.livestock.entity.enums.AnimalType;
+import com.livestock.entity.enums.Gender;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

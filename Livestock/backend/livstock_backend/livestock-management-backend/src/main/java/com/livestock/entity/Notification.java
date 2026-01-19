@@ -1,5 +1,8 @@
 package com.livestock.entity;
 
+import com.livestock.entity.enums.NotificationCategory;
+import com.livestock.entity.enums.NotificationType;
+import com.livestock.entity.enums.Priority;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

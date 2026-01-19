@@ -1,5 +1,5 @@
 // AnimalType.java
-package com.livestock.entity;
+package com.livestock.entity.enums;
 
 public enum AnimalType {
     COW,

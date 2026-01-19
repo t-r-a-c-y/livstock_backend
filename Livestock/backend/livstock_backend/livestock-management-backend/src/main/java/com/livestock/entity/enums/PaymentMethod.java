@@ -1,5 +1,5 @@
 // PaymentMethod.java
-package com.livestock.entity;
+package com.livestock.entity.enums;
 
 public enum PaymentMethod {
     CASH,

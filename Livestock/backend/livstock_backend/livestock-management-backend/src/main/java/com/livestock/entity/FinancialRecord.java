@@ -1,5 +1,7 @@
 package com.livestock.entity;
 
+import com.livestock.entity.enums.FinancialType;
+import com.livestock.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
