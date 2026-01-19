@@ -1,5 +1,4 @@
-// Notification.java
-package com.livestockmis.backend.entity;
+package com.livestock.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -8,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.livestockmis.backend.enums.*;
+
 
 @Entity
 @Table(name = "notifications")
