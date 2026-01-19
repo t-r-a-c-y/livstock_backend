@@ -1,5 +1,4 @@
-// SystemSetting.java
-package com.livestockmis.backend.entity;
+package com.livestock.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
