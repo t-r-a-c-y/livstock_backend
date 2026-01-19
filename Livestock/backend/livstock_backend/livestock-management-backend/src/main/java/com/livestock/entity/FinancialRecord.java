@@ -1,4 +1,4 @@
-
+package com.livestock.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.livestockmis.backend.enums.*;
+
 
 @Entity
 @Table(name = "financial_records")
