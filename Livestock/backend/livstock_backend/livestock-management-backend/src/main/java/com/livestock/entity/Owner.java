@@ -1,72 +1,64 @@
-package com.livestock.entity;
+package com.livestock.entity;// Owner.java
 
+
+import com.livestock.entity.FinancialRecord;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "owners")
-@Data                       // MUST have this for getters/setters
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class Owner {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(unique = true, nullable = false, length = 120)
     private String email;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 30)
     private String phone;
 
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     private String avatar;
 
-    @Column(name = "national_id", length = 100)
+    @Column(length = 50)
     private String nationalId;
 
-    @Column(name = "bank_account", length = 100)
+    @Column(length = 100)
     private String bankAccount;
 
-    @Column(name = "emergency_contact", length = 255)
+    @Column(length = 30)
     private String emergencyContact;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    // Relationships
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Animal> animals = new ArrayList<>();
 
-    // Explicit getters (safety net if Lombok fails in your IDE/build)
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
+    @OneToMany(mappedBy = "owner")
+    private List<FinancialRecord> financialRecords = new ArrayList<>();
 }
