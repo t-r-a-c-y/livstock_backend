@@ -1,82 +1,82 @@
 package com.livestock.entity;
 
+
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+
+
 
 @Entity
 @Table(name = "animals")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Animal {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String tagId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String type;
+    private AnimalType type;
 
-    @Column(nullable = false)
+    @Column(length = 100)
     private String breed;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String gender;
+    private Gender gender;
 
-    @Column
-    private LocalDateTime dateOfBirth;
+    @Column(nullable = false)
+    private LocalDate dateOfBirth;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private Owner owner;
 
-    @Column(name = "owner_name")
-    private String ownerName;  // ← ADDED THIS FIELD
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Animal parent;
 
-    @Column
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AnimalStatus status;
 
-    @Column
-    private Double milk;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal milkProduction;
 
-    @Column
-    private Double salePrice;
+    @Column(length = 500)
+    private String photo;           // URL or file path
 
-    @Column(columnDefinition = "TEXT")
-    private String photo;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal salePrice;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    // Relationships
+    @ManyToMany(mappedBy = "animals")
+    private Set<Activity> activities = new HashSet<>();
 
-    // Explicit setters (safety if Lombok fails)
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
-    }
-
-    public String getOwnerName() {
-        return ownerName;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
+    @OneToMany(mappedBy = "animal")
+    private List<FinancialRecord> financialRecords;
 }

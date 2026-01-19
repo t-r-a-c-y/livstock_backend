@@ -47,5 +47,7 @@ public class AnimalController {
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
+
+
     // Add other endpoints as needed (getById, update, delete)...
 }
