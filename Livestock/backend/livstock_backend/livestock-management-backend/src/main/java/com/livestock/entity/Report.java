@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-import com.livestockmis.backend.enums.*;
+
 
 @Entity
 @Table(name = "reports")
