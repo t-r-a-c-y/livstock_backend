@@ -1,89 +1,71 @@
-// src/main/java/com/livestock/entity/User.java
-package com.livestock.entity;
+// User.java
+package com.livestockmis.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.livestockmis.backend.enums.*;
+
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class User {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 255)
-    private String name;
-
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(unique = true, nullable = false, length = 120)
     private String email;
 
     @Column(nullable = false, length = 255)
-    private String password;
+    private String passwordHash;
 
-    @Column(nullable = false, length = 50)
-    private String role; // admin, manager
+    @Column(nullable = false, length = 100)
+    private String firstName;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, length = 100)
+    private String lastName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
+
+    @Column(length = 500)
     private String avatar;
 
-    @Column(length = 50)
+    @Column(length = 30)
     private String phone;
 
-    @Column(nullable = false, length = 50)
-    private String status = "active"; // active, inactive
-
-    @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    private boolean emailVerified = false;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(length = 255)
+    private String emailVerificationToken;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Column(length = 255)
+    private String passwordResetToken;
 
-    public String getEmail() {
-        return email;
-    }
+    private LocalDateTime passwordResetExpires;
 
-    public String getPassword() {
-        return password;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
-    public String getStatus() {
-        return status;
-    }
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    public String getRole() {
-        return role;
-    }
-
-    public void setLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
