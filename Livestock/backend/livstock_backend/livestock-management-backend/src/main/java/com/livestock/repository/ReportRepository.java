@@ -11,9 +11,9 @@ import java.util.UUID;
 @Repository
 public interface ReportRepository extends JpaRepository<Report, UUID> {
 
-    List<Report> findByTypeOrderByCreatedAtDesc(String type);
+    List<Report> findByGeneratedById(UUID userId);
 
-    List<Report> findTop10ByOrderByCreatedAtDesc();
+    List<Report> findByStatus(String status);  // PENDING, COMPLETED, FAILED
 
-    List<Report> findByGeneratedByOrderByCreatedAtDesc(String generatedBy);
+    List<Report> findByType(String type);
 }
