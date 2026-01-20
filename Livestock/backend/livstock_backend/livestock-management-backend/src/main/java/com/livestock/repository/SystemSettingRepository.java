@@ -5,12 +5,11 @@ import com.livestock.entity.SystemSetting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SystemSettingRepository extends JpaRepository<SystemSetting, java.util.UUID> {
+public interface SystemSettingRepository extends JpaRepository<SystemSetting, UUID> {
 
-    Optional<SystemSetting> findByKey(String key);
-
-    boolean existsByKey(String key);
+    // Usually there's only one settings record
+    // You can use findFirst() or limit 1 in queries if needed
 }
