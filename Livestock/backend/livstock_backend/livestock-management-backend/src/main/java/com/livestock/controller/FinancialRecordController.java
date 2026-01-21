@@ -1,95 +1,46 @@
-// src/main/java/com/livestock/controller/FinancialRecordController.java
 package com.livestock.controller;
 
-import com.livestock.dto.request.FinancialRecordRequest;
-import com.livestock.dto.response.FinancialRecordResponse;
-import com.livestock.dto.response.ApiResponse;
+import com.livestock.dto.FinancialRecordDto;
+import com.livestock.dto.ApiResponse;
 import com.livestock.service.FinancialRecordService;
-import com.livestock.service.PdfReportService;
-import com.lowagie.text.DocumentException;
 import jakarta.validation.Valid;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/financial-records")
+@RequiredArgsConstructor
 public class FinancialRecordController {
 
     private final FinancialRecordService financialRecordService;
-    private final PdfReportService pdfReportService;
 
-    // SINGLE CONSTRUCTOR — Inject both services
-    public FinancialRecordController(FinancialRecordService financialRecordService,
-                                     PdfReportService pdfReportService) {
-        this.financialRecordService = financialRecordService;
-        this.pdfReportService = pdfReportService;
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<FinancialRecordDto>> createRecord(
+            @Valid @RequestBody FinancialRecordDto dto,
+            Authentication authentication) {
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        FinancialRecordDto created = financialRecordService.createFinancialRecord(dto, currentUserId);
+        return ResponseEntity.ok(ApiResponse.success(created));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<FinancialRecordResponse>>> getAllRecords(
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            @RequestParam(required = false) UUID ownerId,
-            @RequestParam(required = false) UUID animalId) {
-
-        List<FinancialRecordResponse> records = financialRecordService.getAllFinancialRecords(
-                type, category, from, to, ownerId, animalId);
-        return ResponseEntity.ok(ApiResponse.success(records));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<List<FinancialRecordDto>>> getAllRecords() {
+        return ResponseEntity.ok(ApiResponse.success(financialRecordService.getAllFinancialRecords()));
     }
 
-    @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<Object>> getSummary() {
-        var summary = financialRecordService.getSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary));
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<FinancialRecordResponse>> createRecord(@Valid @RequestBody FinancialRecordRequest request) {
-        FinancialRecordResponse record = financialRecordService.createFinancialRecord(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(record));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<FinancialRecordResponse>> updateRecord(
-            @PathVariable UUID id, @Valid @RequestBody FinancialRecordRequest request) {
-        FinancialRecordResponse record = financialRecordService.updateFinancialRecord(id, request);
-        return ResponseEntity.ok(ApiResponse.success(record));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteRecord(@PathVariable UUID id) {
-        financialRecordService.deleteFinancialRecord(id);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    @GetMapping("/reports/financial/pdf")
-    public ResponseEntity<InputStreamResource> exportFinancialPdf() throws DocumentException {
-        var summary = financialRecordService.getSummary();
-
-        ByteArrayInputStream bis = pdfReportService.generateFinancialReport(
-                summary.totalIncome(),
-                summary.totalExpense(),
-                summary.profit()
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment; filename=financial-summary-" + LocalDate.now() + ".pdf");
-        headers.add("Content-Type", "application/pdf");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(new InputStreamResource(bis));
+    @GetMapping("/owner/{ownerId}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<List<FinancialRecordDto>>> getByOwner(@PathVariable UUID ownerId) {
+        return ResponseEntity.ok(ApiResponse.success(financialRecordService.getByOwner(ownerId)));
     }
 }
