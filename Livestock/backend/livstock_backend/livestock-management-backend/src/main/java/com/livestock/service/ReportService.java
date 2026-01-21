@@ -6,6 +6,8 @@ import com.livestock.entity.Report;
 import com.livestock.entity.User;
 import com.livestock.entity.enums.ReportStatus;
 import com.livestock.entity.enums.ReportType;
+import com.livestock.repository.AnimalRepository;
+import com.livestock.repository.FinancialRecordRepository;
 import com.livestock.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
