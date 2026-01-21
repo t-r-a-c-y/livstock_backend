@@ -1,15 +1,14 @@
 package com.livestock.controller;
 
-import com.livestock.dto.request.AnimalRequest;
-import com.livestock.dto.response.AnimalResponse;
-import com.livestock.dto.response.ApiResponse;
+import com.livestock.dto.AnimalDto;
+import com.livestock.dto.ApiResponse;
 import com.livestock.service.AnimalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,32 +21,61 @@ public class AnimalController {
     private final AnimalService animalService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AnimalResponse>>> getAllAnimals(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) UUID ownerId,
-            @RequestParam(required = false) String search) {
-        List<AnimalResponse> animals = animalService.getAllAnimals(status, type, ownerId, search);
-        return ResponseEntity.ok(ApiResponse.success(animals));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    public ResponseEntity<ApiResponse<List<AnimalDto>>> getAllAnimals() {
+        return ResponseEntity.ok(ApiResponse.success(animalService.getAllAnimals()));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    public ResponseEntity<ApiResponse<AnimalDto>> getAnimalById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(animalService.getAnimalById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<AnimalResponse>> createAnimal(
-            @Valid @RequestBody AnimalRequest request,
-            @RequestParam UUID ownerId) {  // ← Added ownerId parameter
-        AnimalResponse animal = animalService.createAnimal(request, ownerId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(animal));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<AnimalDto>> createAnimal(
+            @Valid @RequestBody AnimalDto dto,
+            Authentication authentication) {
+
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        AnimalDto created = animalService.createAnimal(dto);
+        return ResponseEntity.ok(ApiResponse.success(created, "Animal created"));
     }
 
-    @PostMapping("/{id}/upload-photo")
-    public ResponseEntity<ApiResponse<AnimalResponse>> uploadPhoto(
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<AnimalDto>> updateAnimal(
             @PathVariable UUID id,
-            @RequestParam("photo") MultipartFile photo) {
-        AnimalResponse updated = animalService.uploadAnimalPhoto(id, photo);
-        return ResponseEntity.ok(ApiResponse.success(updated));
+            @Valid @RequestBody AnimalDto dto) {
+
+        AnimalDto updated = animalService.updateAnimal(id, dto);
+        return ResponseEntity.ok(ApiResponse.success(updated, "Animal updated"));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ResponseEntity<ApiResponse<Void>> deleteAnimal(@PathVariable UUID id) {
+        animalService.deleteAnimal(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Animal deleted"));
+    }
 
+    @GetMapping("/owner/{ownerId}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    public ResponseEntity<ApiResponse<List<AnimalDto>>> getAnimalsByOwner(@PathVariable UUID ownerId) {
+        return ResponseEntity.ok(ApiResponse.success(animalService.getAnimalsByOwner(ownerId)));
+    }
 
-    // Add other endpoints as needed (getById, update, delete)...
+    @GetMapping("/type/{type}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    public ResponseEntity<ApiResponse<List<AnimalDto>>> getAnimalsByType(@PathVariable String type) {
+        // You can convert string to enum if needed
+        return ResponseEntity.ok(ApiResponse.success(animalService.getAnimalsByType(type)));
+    }
+
+    @GetMapping("/sick")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<List<AnimalDto>>> getSickAnimals() {
+        return ResponseEntity.ok(ApiResponse.success(animalService.getSickAnimals()));
+    }
 }
