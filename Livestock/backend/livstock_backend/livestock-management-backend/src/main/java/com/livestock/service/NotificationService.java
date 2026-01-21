@@ -1,4 +1,3 @@
-// NotificationService.java
 package com.livestock.service;
 
 import com.livestock.dto.NotificationDto;
@@ -40,7 +39,8 @@ public class NotificationService {
         n.setPriority(priority);
         n.setRelatedEntityType(relatedEntityType);
         n.setRelatedEntityId(relatedEntityId);
-        n.setActionRequired(false); // default
+        n.setActionRequired(false);
+        n.setIsRead(false);
 
         Notification saved = notificationRepository.save(n);
         return mapToDto(saved);
@@ -72,7 +72,7 @@ public class NotificationService {
     @Transactional
     public void markAsRead(UUID id) {
         Notification n = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
         n.setIsRead(true);
         n.setReadAt(LocalDateTime.now());
         notificationRepository.save(n);
@@ -80,12 +80,21 @@ public class NotificationService {
 
     @Transactional
     public void markAllRead() {
-        notificationRepository.findByIsReadFalseOrderByCreatedAtDesc()
-                .forEach(n -> {
-                    n.setIsRead(true);
-                    n.setReadAt(LocalDateTime.now());
-                });
-        notificationRepository.saveAll(notificationRepository.findByIsReadFalseOrderByCreatedAtDesc());
+        List<Notification> unread = notificationRepository.findByIsReadFalseOrderByCreatedAtDesc();
+        unread.forEach(n -> {
+            n.setIsRead(true);
+            n.setReadAt(LocalDateTime.now());
+        });
+        notificationRepository.saveAll(unread);
+    }
+
+    // NEW METHOD - Add this!
+    @Transactional
+    public void deleteNotification(UUID id) {
+        if (!notificationRepository.existsById(id)) {
+            throw new IllegalArgumentException("Notification not found with ID: " + id);
+        }
+        notificationRepository.deleteById(id);
     }
 
     private NotificationDto mapToDto(Notification n) {
