@@ -17,7 +17,8 @@ public class NotificationDto {
     private Priority priority;
     private String relatedEntityType;
     private UUID relatedEntityId;
-    private boolean isRead;
+
+    private boolean isRead;           // ← Add this!
     private LocalDateTime readAt;
     private boolean actionRequired;
     private LocalDateTime createdAt;
