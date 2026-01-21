@@ -1,95 +1,132 @@
-// src/main/java/com/livestock/service/UserService.java
 package com.livestock.service;
 
-import com.livestock.dto.request.UserRequest;
-import com.livestock.dto.response.UserResponse;
+import com.livestock.dto.UserDto;
 import com.livestock.entity.User;
-import com.livestock.exception.ResourceNotFoundException;
+import com.livestock.entity.enums.Role;
 import com.livestock.repository.UserRepository;
-import org.modelmapper.ModelMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ModelMapper modelMapper;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.modelMapper = modelMapper;
+    @Transactional
+    public UserDto createUser(String email, String rawPassword, String firstName, String lastName,
+                              Role role, String phone, UUID createdById) {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(role);
+        user.setPhone(phone);
+        user.setActive(true);
+        user.setEmailVerified(false);
+        // Optional: generate verification token here
+        user.setCreatedBy(userRepository.findById(createdById).orElse(null));
+
+        User saved = userRepository.save(user);
+        return mapToDto(saved);
     }
 
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAllActive().stream()
-                .map(u -> modelMapper.map(u, UserResponse.class))
-                .toList();
-    }
+    @Transactional
+    public UserDto updateUser(UUID id, UserDto dto) {
+        User existing = getUserEntity(id);
 
-    public UserResponse getUserById(UUID id) {
-        User user = userRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return modelMapper.map(user, UserResponse.class);
-    }
-
-    public UserResponse createUser(UserRequest request) {
-        if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
+        if (!existing.getEmail().equals(dto.getEmail()) &&
+                userRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Email already in use");
         }
 
-        User user = modelMapper.map(request, User.class);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setStatus("active");
-        user = userRepository.save(user);
+        existing.setEmail(dto.getEmail());
+        existing.setFirstName(dto.getFirstName());
+        existing.setLastName(dto.getLastName());
+        existing.setRole(dto.getRole());
+        existing.setPhone(dto.getPhone());
+        existing.setAvatar(dto.getAvatar());
 
-        return modelMapper.map(user, UserResponse.class);
+        // Password change only if provided (handled separately in most cases)
+        User saved = userRepository.save(existing);
+        return mapToDto(saved);
     }
 
-    public UserResponse updateUser(UUID id, UserRequest request) {
-        User user = userRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (!user.getEmail().equals(request.getEmail()) &&
-                userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
-        }
-
-        modelMapper.map(request, user);
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        user.setUpdatedAt(LocalDateTime.now());
-        user = userRepository.save(user);
-
-        return modelMapper.map(user, UserResponse.class);
+    @Transactional(readOnly = true)
+    public UserDto getUserById(UUID id) {
+        return mapToDto(getUserEntity(id));
     }
 
-    public void deleteUser(UUID id) {
-        User user = userRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setDeletedAt(LocalDateTime.now());
-        user.setStatus("inactive");
-        userRepository.save(user);
+    @Transactional(readOnly = true)
+    public User getUserEntity(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Transactional(readOnly = true)
+    public UserDto getUserByEmail(String email) {
+        return mapToDto(userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
     public void deactivateUser(UUID id) {
-        User user = userRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setStatus("inactive");
+        User user = getUserEntity(id);
+        user.setActive(false);
         userRepository.save(user);
     }
 
+    @Transactional
     public void activateUser(UUID id) {
-        User user = userRepository.findActiveById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setStatus("active");
+        User user = getUserEntity(id);
+        user.setActive(true);
         userRepository.save(user);
+    }
+
+    // For password reset / verification flows (called from AuthService)
+    @Transactional
+    public void setPasswordResetToken(UUID userId, String token, LocalDateTime expires) {
+        User user = getUserEntity(userId);
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpires(expires);
+        userRepository.save(user);
+    }
+
+    // Simple mapping
+    private UserDto mapToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setRole(user.getRole());
+        dto.setActive(user.isActive());
+        dto.setAvatar(user.getAvatar());
+        dto.setPhone(user.getPhone());
+        dto.setLastLogin(user.getLastLogin());
+        dto.setEmailVerified(user.isEmailVerified());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
     }
 }
