@@ -18,7 +18,8 @@ public class NotificationDto {
     private String relatedEntityType;
     private UUID relatedEntityId;
 
-    private boolean isRead;           // ← Add this!
+    private boolean isRead;               // ← Add / fix this field!
+
     private LocalDateTime readAt;
     private boolean actionRequired;
     private LocalDateTime createdAt;
