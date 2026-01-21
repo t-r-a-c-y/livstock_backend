@@ -6,11 +6,13 @@ import com.livestock.entity.enums.AnimalType;
 import com.livestock.service.AnimalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,18 +71,24 @@ public class AnimalController {
 
     @GetMapping("/type/{type}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
-    public ResponseEntity<ApiResponse<List<AnimalDto>>> getAnimalsByType(@PathVariable String type) {
-        try {
-            // Convert string to enum (case-insensitive if you want)
-            AnimalType animalType = AnimalType.valueOf(type.toUpperCase());
-            List<AnimalDto> animals = animalService.getAnimalsByType(animalType);
-            return ResponseEntity.ok(ApiResponse.success(animals));
-        } catch (IllegalArgumentException e) {
-            // Handle invalid enum value gracefully
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Invalid animal type: " + type + ". Valid values: " +
-                            String.join(", ", AnimalType.values().stream().map(Enum::name).toList())));
-        }
+    public ResponseEntity<ApiResponse<List<AnimalDto>>> getAnimalsByType(
+            @PathVariable AnimalType type) {
+
+        List<AnimalDto> animals = animalService.getAnimalsByType(type);
+        return ResponseEntity.ok(ApiResponse.success(animals, "Animals of type " + type + " retrieved"));
+    }
+
+    @ExceptionHandler(ConversionFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidAnimalType(ConversionFailedException ex) {
+        String validTypes = String.join(", ",
+                Arrays.stream(AnimalType.values())
+                        .map(Enum::name)
+                        .toArray(String[]::new)
+        );
+
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Invalid animal type: '" + ex.getValue() +
+                        "'. Valid values are: " + validTypes));
     }
 
     @GetMapping("/sick")
