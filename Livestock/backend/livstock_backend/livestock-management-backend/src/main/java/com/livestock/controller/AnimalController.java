@@ -2,6 +2,7 @@ package com.livestock.controller;
 
 import com.livestock.dto.AnimalDto;
 import com.livestock.dto.ApiResponse;
+import com.livestock.entity.enums.AnimalType;
 import com.livestock.service.AnimalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +70,17 @@ public class AnimalController {
     @GetMapping("/type/{type}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
     public ResponseEntity<ApiResponse<List<AnimalDto>>> getAnimalsByType(@PathVariable String type) {
-        // You can convert string to enum if needed
-        return ResponseEntity.ok(ApiResponse.success(animalService.getAnimalsByType(type)));
+        try {
+            // Convert string to enum (case-insensitive if you want)
+            AnimalType animalType = AnimalType.valueOf(type.toUpperCase());
+            List<AnimalDto> animals = animalService.getAnimalsByType(animalType);
+            return ResponseEntity.ok(ApiResponse.success(animals));
+        } catch (IllegalArgumentException e) {
+            // Handle invalid enum value gracefully
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Invalid animal type: " + type + ". Valid values: " +
+                            String.join(", ", AnimalType.values().stream().map(Enum::name).toList())));
+        }
     }
 
     @GetMapping("/sick")
