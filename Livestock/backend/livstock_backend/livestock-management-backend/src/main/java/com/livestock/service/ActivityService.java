@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -34,6 +36,7 @@ public class ActivityService {
     private final NotificationService notificationService;
     private final UserService userService;
 
+    // CREATE new activity
     @Transactional
     public ActivityDto createActivity(ActivityDto dto, UUID currentUserId) {
         Activity activity = new Activity();
@@ -44,11 +47,13 @@ public class ActivityService {
         activity.setCost(dto.getCost());
         activity.setNotes(dto.getNotes());
 
+        // Set creator
         User creator = userService.getUserEntity(currentUserId);
         activity.setCreatedBy(creator);
 
+        // Validate and set animals
         if (dto.getAnimalIds() == null || dto.getAnimalIds().isEmpty()) {
-            throw new IllegalArgumentException("At least one animal must be selected");
+            throw new IllegalArgumentException("At least one animal must be associated with the activity");
         }
 
         Set<Animal> animals = dto.getAnimalIds().stream()
@@ -58,22 +63,27 @@ public class ActivityService {
 
         activity.setAnimals(animals);
 
-        Activity saved = activityRepository.save(activity);
+        // Save
+        Activity savedActivity = activityRepository.save(activity);
 
-        createFinancialRecordsFromActivity(saved, creator);
+        // Auto-create financial records
+        createFinancialRecordsFromActivity(savedActivity, creator);
 
-        if (saved.getType() == ActivityType.BIRTH) {
-            handleBirthActivity(saved);
+        // Handle special case: birth activity
+        if (savedActivity.getType() == ActivityType.BIRTH) {
+            handleBirthActivity(savedActivity);
         }
 
-        return mapToDto(saved);
+        return mapToDto(savedActivity);
     }
 
+    // UPDATE existing activity
     @Transactional
     public ActivityDto updateActivity(UUID id, ActivityDto dto, UUID currentUserId) {
         Activity existing = activityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Activity not found"));
 
+        // Update basic fields
         existing.setType(dto.getType());
         existing.setDescription(dto.getDescription());
         existing.setDate(dto.getDate());
@@ -81,6 +91,7 @@ public class ActivityService {
         existing.setCost(dto.getCost());
         existing.setNotes(dto.getNotes());
 
+        // Update animals if provided
         if (dto.getAnimalIds() != null && !dto.getAnimalIds().isEmpty()) {
             Set<Animal> animals = dto.getAnimalIds().stream()
                     .map(animalId -> animalRepository.findById(animalId)
@@ -89,14 +100,60 @@ public class ActivityService {
             existing.setAnimals(animals);
         }
 
-        Activity saved = activityRepository.save(existing);
+        Activity updatedActivity = activityRepository.save(existing);
 
-        createFinancialRecordsFromActivity(saved, userService.getUserEntity(currentUserId));
+        // Re-apply financial logic in case cost/amount changed
+        createFinancialRecordsFromActivity(updatedActivity, userService.getUserEntity(currentUserId));
 
-        return mapToDto(saved);
+        return mapToDto(updatedActivity);
     }
 
+    // GET single activity
+    @Transactional(readOnly = true)
+    public ActivityDto getActivityById(UUID id) {
+        Activity activity = activityRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        return mapToDto(activity);
+    }
+
+    // GET all activities
+    @Transactional(readOnly = true)
+    public List<ActivityDto> getAllActivities() {
+        return activityRepository.findAll().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // GET activities by animal
+    @Transactional(readOnly = true)
+    public List<ActivityDto> getActivitiesByAnimal(UUID animalId) {
+        return activityRepository.findByAnimalId(animalId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // GET activities in date range
+    @Transactional(readOnly = true)
+    public List<ActivityDto> getActivitiesByDateRange(LocalDate start, LocalDate end) {
+        return activityRepository.findByDateBetween(start, end).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // DELETE activity
+    @Transactional
+    public void deleteActivity(UUID id) {
+        if (!activityRepository.existsById(id)) {
+            throw new IllegalArgumentException("Activity not found");
+        }
+        activityRepository.deleteById(id);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // BUSINESS LOGIC: AUTO FINANCIAL RECORDS
+    // ────────────────────────────────────────────────────────────────
     private void createFinancialRecordsFromActivity(Activity activity, User creator) {
+        // Expense from cost
         if (activity.getCost() != null && activity.getCost().compareTo(BigDecimal.ZERO) > 0) {
             FinancialRecord expense = new FinancialRecord();
             expense.setType(FinancialType.EXPENSE);
@@ -105,12 +162,15 @@ public class ActivityService {
             expense.setDescription("Cost from activity: " + activity.getDescription());
             expense.setDate(activity.getDate());
             expense.setCreatedBy(creator);
+
             if (!activity.getAnimals().isEmpty()) {
                 expense.setAnimal(activity.getAnimals().iterator().next());
             }
+
             financialRecordRepository.save(expense);
         }
 
+        // Income from sale or birth
         if (activity.getAmount() != null && activity.getAmount().compareTo(BigDecimal.ZERO) > 0 &&
                 (activity.getType() == ActivityType.SALE || activity.getType() == ActivityType.BIRTH)) {
             FinancialRecord income = new FinancialRecord();
@@ -120,21 +180,26 @@ public class ActivityService {
             income.setDescription("Income from activity: " + activity.getDescription());
             income.setDate(activity.getDate());
             income.setCreatedBy(creator);
+
             if (!activity.getAnimals().isEmpty()) {
                 income.setAnimal(activity.getAnimals().iterator().next());
             }
+
             financialRecordRepository.save(income);
         }
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // BUSINESS LOGIC: BIRTH HANDLING
+    // ────────────────────────────────────────────────────────────────
     private void handleBirthActivity(Activity activity) {
         if (activity.getAnimals().size() != 1) {
-            throw new IllegalStateException("Birth must have exactly one mother");
+            throw new IllegalStateException("Birth activity must involve exactly one mother");
         }
 
         Animal mother = activity.getAnimals().iterator().next();
         if (mother.getGender() != Gender.FEMALE) {
-            throw new IllegalStateException("Only female can give birth");
+            throw new IllegalStateException("Only female animals can give birth");
         }
 
         notificationService.createNotification(
@@ -148,6 +213,9 @@ public class ActivityService {
         );
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // MAPPING: Entity → DTO
+    // ────────────────────────────────────────────────────────────────
     private ActivityDto mapToDto(Activity activity) {
         ActivityDto dto = new ActivityDto();
         dto.setId(activity.getId());
@@ -157,12 +225,23 @@ public class ActivityService {
         dto.setAmount(activity.getAmount());
         dto.setCost(activity.getCost());
         dto.setNotes(activity.getNotes());
-        dto.setCreatedById(activity.getCreatedBy().getId());
-        dto.setCreatedByName(activity.getCreatedBy().getFirstName() + " " + activity.getCreatedBy().getLastName());
+
+        if (activity.getCreatedBy() != null) {
+            dto.setCreatedById(activity.getCreatedBy().getId());
+            dto.setCreatedByName(
+                    activity.getCreatedBy().getFirstName() + " " +
+                            activity.getCreatedBy().getLastName()
+            );
+        }
+
         dto.setCreatedAt(activity.getCreatedAt());
-        dto.setAnimalIds(activity.getAnimals().stream().map(Animal::getId).collect(Collectors.toList()));
+
+        dto.setAnimalIds(
+                activity.getAnimals().stream()
+                        .map(Animal::getId)
+                        .collect(Collectors.toList())
+        );
+
         return dto;
     }
-
-    // ... other methods (getAllActivities, getById, delete, etc.) remain the same
 }
