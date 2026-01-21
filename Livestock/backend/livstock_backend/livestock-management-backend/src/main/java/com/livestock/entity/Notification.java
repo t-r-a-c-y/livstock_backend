@@ -40,8 +40,8 @@ public class Notification {
 
     private UUID relatedEntityId;
 
-    @Column(nullable = false)
-    private boolean isRead = false;           // ← This field must exist!
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isRead = false;       // ← Must be exactly this name!
 
     private LocalDateTime readAt;
 
