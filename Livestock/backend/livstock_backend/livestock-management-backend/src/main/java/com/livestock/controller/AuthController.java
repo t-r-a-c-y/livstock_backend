@@ -1,65 +1,48 @@
-// src/main/java/com/livestock/controller/AuthController.java
 package com.livestock.controller;
 
-import com.livestock.dto.request.LoginRequest;
-import com.livestock.dto.response.ApiResponse;
-import com.livestock.dto.response.LoginResponse;
-import com.livestock.security.JwtTokenProvider;
+import com.livestock.dto.ApiResponse;
+import com.livestock.dto.LoginRequestDto;
+import com.livestock.dto.LoginResponseDto;
+import com.livestock.dto.RegisterRequestDto;
+import com.livestock.dto.UserDto;
+import com.livestock.service.AuthService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-
-    public AuthController(AuthenticationManager authenticationManager,
-                          JwtTokenProvider jwtTokenProvider) {
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
+    private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        LoginResponseDto response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+    }
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequestDto request) {
+        // In real app: check if caller is admin or allow self-registration with default role
+        UserDto created = authService.register(request, null); // or pass current admin ID
+        return ResponseEntity.ok(ApiResponse.success(created, "User registered"));
+    }
 
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email) {
+        authService.initiatePasswordReset(email);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset link sent"));
+    }
 
-            // Pass the Authentication object to generateToken (most common design)
-            String token = jwtTokenProvider.generateToken(authentication);
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestParam String token,
+            @RequestParam String newPassword) {
 
-            LoginResponse loginResponse = new LoginResponse(token);
-
-            return ResponseEntity.ok(ApiResponse.success(loginResponse));
-
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.error("Invalid email or password", "UNAUTHORIZED"));
-        } catch (DisabledException e) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.error("User account is disabled", "DISABLED"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(ApiResponse.error("Server error: " + e.getMessage(), "SERVER_ERROR"));
-        }
+        authService.resetPassword(token, newPassword);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
 }
