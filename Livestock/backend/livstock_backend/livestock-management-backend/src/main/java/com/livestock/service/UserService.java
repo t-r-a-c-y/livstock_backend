@@ -112,8 +112,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // Simple mapping
-    private UserDto mapToDto(User user) {
+    public UserDto mapToDto(User user) {   // ← change private → public
         UserDto dto = new UserDto();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
