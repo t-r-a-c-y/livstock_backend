@@ -1,16 +1,17 @@
+// FinancialRecordService.java
 package com.livestock.service;
 
-import com.livestock.dto.request.FinancialRecordRequest;
-import com.livestock.dto.response.FinancialRecordResponse;
+import com.livestock.dto.FinancialRecordDto;
 import com.livestock.entity.FinancialRecord;
-import com.livestock.entity.Owner;
+import com.livestock.entity.User;
+import com.livestock.entity.enums.FinancialType;
 import com.livestock.repository.FinancialRecordRepository;
-import com.livestock.repository.OwnerRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,66 +21,87 @@ import java.util.stream.Collectors;
 public class FinancialRecordService {
 
     private final FinancialRecordRepository financialRecordRepository;
-    private final OwnerRepository ownerRepository;
-    private final ModelMapper modelMapper;
+    private final UserService userService;
 
-    public FinancialRecordResponse createFinancialRecord(FinancialRecordRequest request, UUID ownerId) {
-        Owner owner = null;
-        if (ownerId != null) {
-            owner = ownerRepository.findByIdAndDeletedAtIsNull(ownerId)
-                    .orElseThrow(() -> new RuntimeException("Owner not found"));
-        }
-
-        FinancialRecord record = modelMapper.map(request, FinancialRecord.class);
-        if (owner != null) {
-            record.setOwner(owner);
-            record.setOwnerName(owner.getName());
-        }
-
+    @Transactional
+    public FinancialRecordDto createFinancialRecord(FinancialRecordDto dto, UUID currentUserId) {
+        FinancialRecord record = mapToEntity(dto);
+        record.setCreatedBy(userService.getUserEntity(currentUserId));
         FinancialRecord saved = financialRecordRepository.save(record);
-        return modelMapper.map(saved, FinancialRecordResponse.class);
+        return mapToDto(saved);
     }
 
-    public List<FinancialRecordResponse> getAllFinancialRecords(String type, String category, LocalDateTime from, LocalDateTime to, UUID ownerId, UUID animalId) {
-        List<FinancialRecord> records = financialRecordRepository.findAllByDeletedAtIsNull();
-
-        if (type != null) records = records.stream().filter(r -> type.equals(r.getType())).collect(Collectors.toList());
-        if (category != null) records = records.stream().filter(r -> category.equals(r.getCategory())).collect(Collectors.toList());
-        if (from != null) records = records.stream().filter(r -> r.getDate().isAfter(from)).collect(Collectors.toList());
-        if (to != null) records = records.stream().filter(r -> r.getDate().isBefore(to)).collect(Collectors.toList());
-        if (ownerId != null) records = records.stream().filter(r -> r.getOwner() != null && ownerId.equals(r.getOwner().getId())).collect(Collectors.toList());
-        if (animalId != null) records = records.stream().filter(r -> animalId.equals(r.getAnimalId())).collect(Collectors.toList());
-
-        return records.stream()
-                .map(r -> modelMapper.map(r, FinancialRecordResponse.class))
-                .collect(Collectors.toList());
-    }
-
-    public FinancialRecordResponse getFinancialRecordById(UUID id) {
-        FinancialRecord record = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
+    @Transactional
+    public FinancialRecordDto updateFinancialRecord(UUID id, FinancialRecordDto dto) {
+        FinancialRecord existing = financialRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Record not found"));
-        return modelMapper.map(record, FinancialRecordResponse.class);
+        updateFields(existing, dto);
+        return mapToDto(financialRecordRepository.save(existing));
     }
 
-    public FinancialRecordResponse updateFinancialRecord(UUID id, FinancialRecordRequest request) {
-        FinancialRecord existing = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Record not found"));
-        modelMapper.map(request, existing);
-        existing.setUpdatedAt(LocalDateTime.now());
-        FinancialRecord updated = financialRecordRepository.save(existing);
-        return modelMapper.map(updated, FinancialRecordResponse.class);
+    @Transactional(readOnly = true)
+    public FinancialRecordDto getFinancialRecordById(UUID id) {
+        return mapToDto(financialRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Record not found")));
     }
 
+    @Transactional(readOnly = true)
+    public List<FinancialRecordDto> getAllFinancialRecords() {
+        return financialRecordRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    @Transactional
     public void deleteFinancialRecord(UUID id) {
-        FinancialRecord record = financialRecordRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Record not found"));
-        record.setDeletedAt(LocalDateTime.now());
-        financialRecordRepository.save(record);
+        financialRecordRepository.deleteById(id);
     }
 
-    // Add this if you want summary (you can implement it later)
-    public Object getSummary() {
-        // Implement logic for total income, expense, profit
-        return null; // Placeholder
+    @Transactional(readOnly = true)
+    public List<FinancialRecordDto> getByOwner(UUID ownerId) {
+        return financialRecordRepository.findByOwnerId(ownerId).stream()
+                .map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalIncome(LocalDate start, LocalDate end) {
+        return financialRecordRepository.sumIncomeBetween(start, end);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalExpense(LocalDate start, LocalDate end) {
+        return financialRecordRepository.sumExpenseBetween(start, end);
+    }
+
+    private void updateFields(FinancialRecord target, FinancialRecordDto source) {
+        target.setType(source.getType());
+        target.setCategory(source.getCategory());
+        target.setAmount(source.getAmount());
+        target.setDescription(source.getDescription());
+        target.setDate(source.getDate());
+        // owner, animal, paymentMethod, etc. can be updated similarly
+    }
+
+    private FinancialRecord mapToEntity(FinancialRecordDto dto) {
+        FinancialRecord fr = new FinancialRecord();
+        fr.setType(dto.getType());
+        fr.setCategory(dto.getCategory());
+        fr.setAmount(dto.getAmount());
+        fr.setDescription(dto.getDescription());
+        fr.setDate(dto.getDate());
+        // map owner, animal, etc. if needed
+        return fr;
+    }
+
+    private FinancialRecordDto mapToDto(FinancialRecord fr) {
+        FinancialRecordDto dto = new FinancialRecordDto();
+        dto.setId(fr.getId());
+        dto.setType(fr.getType());
+        dto.setCategory(fr.getCategory());
+        dto.setAmount(fr.getAmount());
+        dto.setDescription(fr.getDescription());
+        dto.setDate(fr.getDate());
+        dto.setCreatedAt(fr.getCreatedAt());
+        dto.setUpdatedAt(fr.getUpdatedAt());
+        // add ownerId, animalId etc.
+        return dto;
     }
 }
