@@ -1,55 +1,97 @@
-// src/main/java/com/livestock/service/ReportService.java
+// ReportService.java
 package com.livestock.service;
 
-import com.livestock.dto.request.GenerateReportRequest;
+import com.livestock.dto.ReportDto;
 import com.livestock.entity.Report;
+import com.livestock.entity.User;
+import com.livestock.entity.enums.ReportStatus;
+import com.livestock.entity.enums.ReportType;
 import com.livestock.repository.ReportRepository;
-import org.modelmapper.ModelMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ReportService {
 
     private final ReportRepository reportRepository;
-    private final ModelMapper modelMapper;
+    private final AnimalRepository animalRepository;
+    private final FinancialRecordRepository financialRecordRepository;
+    private final UserService userService;
 
-    public ReportService(ReportRepository reportRepository, ModelMapper modelMapper) {
-        this.reportRepository = reportRepository;
-        this.modelMapper = modelMapper;
-    }
-
-    public List<Report> getAllReports() {
-        return reportRepository.findTop10ByOrderByCreatedAtDesc();
-    }
-
-    public Report getReportById(UUID id) {
-        return reportRepository.findById(id).orElse(null);
-    }
-
-    public Report generateReport(GenerateReportRequest request, String generatedBy) {
+    @Transactional
+    public ReportDto createReportRequest(ReportDto dto, UUID generatedById) {
         Report report = new Report();
-        report.setTitle(request.getTitle());
-        report.setType(request.getType());
-        report.setDescription(request.getDescription());
-        report.setDateFrom(request.getDateFrom());
-        report.setDateTo(request.getDateTo());
-        report.setFilters(request.getFilters());
-        report.setGeneratedBy(generatedBy);
-        report.setStatus("pending");
+        report.setTitle(dto.getTitle());
+        report.setDescription(dto.getDescription());
+        report.setType(dto.getType());
+        report.setDateFrom(dto.getDateFrom());
+        report.setDateTo(dto.getDateTo());
+        report.setFilters(dto.getFilters());
+        report.setStatus(ReportStatus.PENDING);
+        report.setGeneratedBy(userService.getUserEntity(generatedById));
 
-        // Simulate report generation (in real app: async job)
-        report.setData(Map.of(
-                "message", "Report generation completed",
-                "generatedAt", LocalDateTime.now().toString(),
-                "totalRecords", 123
-        ));
-        report.setStatus("generated");
+        Report saved = reportRepository.save(report);
+        generateReportAsync(saved.getId());
+        return mapToDto(saved);
+    }
 
-        return reportRepository.save(report);
+    @Async
+    @Transactional
+    public void generateReportAsync(UUID reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        Map<String, Object> data = new HashMap<>();
+
+        if (report.getType() == ReportType.LIVESTOCK) {
+            data.put("totalAnimals", animalRepository.count());
+            data.put("sickCount", animalRepository.countSickAnimals());
+        } else if (report.getType() == ReportType.FINANCIAL) {
+            data.put("totalIncome", financialRecordRepository.sumIncomeBetween(report.getDateFrom(), report.getDateTo()));
+            data.put("totalExpense", financialRecordRepository.sumExpenseBetween(report.getDateFrom(), report.getDateTo()));
+        }
+        // Add logic for other report types
+
+        report.setData(data);
+        report.setStatus(ReportStatus.COMPLETED);
+        reportRepository.save(report);
+    }
+
+    @Transactional(readOnly = true)
+    public ReportDto getReportById(UUID id) {
+        return mapToDto(reportRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Report not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReportDto> getAllReports() {
+        return reportRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    private ReportDto mapToDto(Report r) {
+        ReportDto dto = new ReportDto();
+        dto.setId(r.getId());
+        dto.setTitle(r.getTitle());
+        dto.setDescription(r.getDescription());
+        dto.setType(r.getType());
+        dto.setDateFrom(r.getDateFrom());
+        dto.setDateTo(r.getDateTo());
+        dto.setFilters(r.getFilters());
+        dto.setData(r.getData());
+        dto.setStatus(r.getStatus());
+        dto.setGeneratedById(r.getGeneratedBy().getId());
+        dto.setCreatedAt(r.getCreatedAt());
+        dto.setUpdatedAt(r.getUpdatedAt());
+        return dto;
     }
 }
