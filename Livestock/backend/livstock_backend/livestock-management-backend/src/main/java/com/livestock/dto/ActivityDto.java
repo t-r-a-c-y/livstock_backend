@@ -35,5 +35,6 @@ public class ActivityDto {
     private LocalDateTime createdAt;
 
     // Input-only or common
-    private List<UUID> animalIds;        // required for create/update
+    private List<UUID> animalIds;
+    // required for create/update
 }
