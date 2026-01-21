@@ -1,6 +1,7 @@
+// src/main/java/com/livestock/dto/ActivityDto.java
 package com.livestock.dto;
 
-import com.livestock.entity.enums.*;
+import com.livestock.entity.enums.ActivityType;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,15 +13,20 @@ import java.util.UUID;
 @Data
 public class ActivityDto {
 
-    private UUID id;
+    // Fields used in response (most are read-only / generated)
+    private UUID id;                     // generated → ignore in create request
     private ActivityType type;
     private String description;
     private LocalDate date;
     private BigDecimal amount;
     private BigDecimal cost;
     private String notes;
-    private UUID createdById;          // user who created
-    private String createdByName;      // optional
+
+    // These are usually read-only / system-generated
+    private UUID createdById;
+    private String createdByName;
     private LocalDateTime createdAt;
-    private List<UUID> animalIds;      // list of involved animals
+
+    // Input-only or common
+    private List<UUID> animalIds;        // required for create/update
 }
