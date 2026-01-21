@@ -1,3 +1,14 @@
+import com.livestock.dto.ActivityDto;
+import com.livestock.service.ActivityService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/activities")
 @RequiredArgsConstructor
