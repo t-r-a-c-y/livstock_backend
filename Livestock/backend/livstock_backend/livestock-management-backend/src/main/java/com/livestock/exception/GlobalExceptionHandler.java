@@ -1,7 +1,7 @@
 // src/main/java/com/livestock/exception/GlobalExceptionHandler.java
 package com.livestock.exception;
 
-import com.livestock.dto.response.ApiResponse;
+import com.livestock.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
