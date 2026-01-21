@@ -1,16 +1,12 @@
 package com.livestock.entity;
 
-import com.livestock.entity.enums.NotificationCategory;
-import com.livestock.entity.enums.NotificationType;
-import com.livestock.entity.enums.Priority;
+import com.livestock.entity.enums.*;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-
 
 @Entity
 @Table(name = "notifications")
@@ -45,7 +41,7 @@ public class Notification {
     private UUID relatedEntityId;
 
     @Column(nullable = false)
-    private boolean isRead = false;
+    private boolean isRead = false;           // ← This field must exist!
 
     private LocalDateTime readAt;
 
