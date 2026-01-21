@@ -23,4 +23,8 @@ public class NotificationDto {
     private LocalDateTime readAt;
     private boolean actionRequired;
     private LocalDateTime createdAt;
+
+    public void setIsRead(boolean isRead) {
+        this.isRead = isRead;
+    }
 }

@@ -51,4 +51,8 @@ public class Notification {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    public void setIsRead(boolean isRead) {
+        this.isRead = isRead;
+    }
 }
