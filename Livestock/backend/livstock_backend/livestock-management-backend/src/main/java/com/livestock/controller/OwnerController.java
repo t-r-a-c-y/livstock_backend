@@ -1,20 +1,16 @@
 package com.livestock.controller;
 
-import com.livestock.dto.request.OwnerRequest;
-import com.livestock.dto.response.OwnerResponse;
-import com.livestock.dto.response.ApiResponse;
-import com.livestock.entity.Owner;
+import com.livestock.dto.OwnerDto;
+import com.livestock.dto.ApiResponse;
 import com.livestock.service.OwnerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/owners")
@@ -22,42 +18,46 @@ import java.util.stream.Collectors;
 public class OwnerController {
 
     private final OwnerService ownerService;
-    private final ModelMapper modelMapper;
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<OwnerResponse>> createOwner(@Valid @RequestBody OwnerRequest request) {
-        Owner created = ownerService.createOwner(request);
-        OwnerResponse response = modelMapper.map(created, OwnerResponse.class);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
-    }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OwnerResponse>>> getAllOwners() {
-        List<Owner> owners = ownerService.getAllOwners();
-        List<OwnerResponse> responses = owners.stream()
-                .map(o -> modelMapper.map(o, OwnerResponse.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(responses));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<List<OwnerDto>>> getAllOwners() {
+        return ResponseEntity.ok(ApiResponse.success(ownerService.getAllOwners()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OwnerResponse>> getOwnerById(@PathVariable UUID id) {
-        Owner owner = ownerService.getOwnerById(id);
-        OwnerResponse response = modelMapper.map(owner, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(response));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    public ResponseEntity<ApiResponse<OwnerDto>> getOwnerById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(ownerService.getOwnerById(id)));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ResponseEntity<ApiResponse<OwnerDto>> createOwner(@Valid @RequestBody OwnerDto dto) {
+        OwnerDto created = ownerService.createOwner(dto);
+        return ResponseEntity.ok(ApiResponse.success(created, "Owner created"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<OwnerResponse>> updateOwner(
-            @PathVariable UUID id, @Valid @RequestBody OwnerRequest request) {
-        Owner updated = ownerService.updateOwner(id, request);
-        OwnerResponse response = modelMapper.map(updated, OwnerResponse.class);
-        return ResponseEntity.ok(ApiResponse.success(response));
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ResponseEntity<ApiResponse<OwnerDto>> updateOwner(
+            @PathVariable UUID id,
+            @Valid @RequestBody OwnerDto dto) {
+
+        OwnerDto updated = ownerService.updateOwner(id, dto);
+        return ResponseEntity.ok(ApiResponse.success(updated, "Owner updated"));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteOwner(@PathVariable UUID id) {
         ownerService.deleteOwner(id);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success(null, "Owner deleted"));
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
+    public ResponseEntity<ApiResponse<List<OwnerDto>>> searchOwners(@RequestParam String name) {
+        return ResponseEntity.ok(ApiResponse.success(ownerService.searchOwnersByName(name)));
     }
 }
