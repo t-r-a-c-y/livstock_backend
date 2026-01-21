@@ -17,6 +17,7 @@ import java.util.UUID;
 public class ActivityDto {
 
     // Fields used in response (most are read-only / generated)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private UUID id;                     // generated → ignore in create request
     private ActivityType type;
     private String description;
@@ -26,8 +27,11 @@ public class ActivityDto {
     private String notes;
 
     // These are usually read-only / system-generated
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private UUID createdById;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String createdByName;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
     // Input-only or common
