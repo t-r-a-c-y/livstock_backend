@@ -3,6 +3,8 @@ package com.livestock.dto;
 
 import com.livestock.entity.enums.ActivityType;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
+@JsonIgnoreProperties(value = {"id", "createdById", "createdByName", "createdAt"}, allowGetters = true)
 public class ActivityDto {
 
     // Fields used in response (most are read-only / generated)
