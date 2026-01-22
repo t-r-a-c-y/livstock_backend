@@ -26,8 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequestDto request) {
-        // In real app: check if caller is admin or allow self-registration with default role
-        UserDto created = authService.register(request, null); // or pass current admin ID
+        UserDto created = authService.register(request);   // ← fixed: only one argument
         return ResponseEntity.ok(ApiResponse.success(created, "User registered"));
     }
 
