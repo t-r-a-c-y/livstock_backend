@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
@@ -18,7 +18,7 @@ public class JwtUtil {
     @Value("${jwt.expiration:3600000}")  // 1 hour default
     private long jwtExpirationMs;
 
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
@@ -26,16 +26,16 @@ public class JwtUtil {
         String username = authentication.getName();
 
         return Jwts.builder()
-                .subject(username)               // ← new way, no deprecated setSubject
-                .issuedAt(new Date())            // ← new way
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))  // ← new way
-                .signWith(getSigningKey())       // ← modern signWith
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public String getUsernameFromToken(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())     // ← new parser style
+                .verifyWith(getSigningKey())     // ← now correctly uses SecretKey
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -45,11 +45,11 @@ public class JwtUtil {
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getSigningKey())
+                    .verifyWith(getSigningKey()) // ← correct type
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             // You can log specific errors here if needed
             return false;
         }
