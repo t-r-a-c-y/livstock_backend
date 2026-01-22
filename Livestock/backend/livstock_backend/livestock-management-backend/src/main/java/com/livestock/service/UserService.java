@@ -22,8 +22,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UserDto createUser(String email, String rawPassword, String firstName, String lastName,
-                              Role role, String phone, UUID createdById) {
+    public UserDto createUser(
+            String email,
+            String rawPassword,
+            String firstName,
+            String lastName,
+            Role role,
+            String phone,
+            UUID createdById) {
+
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already registered");
         }
@@ -37,8 +44,10 @@ public class UserService {
         user.setPhone(phone);
         user.setActive(true);
         user.setEmailVerified(false);
-        // Optional: generate verification token here
-        user.setCreatedBy(userRepository.findById(createdById).orElse(null));
+
+        if (createdById != null) {
+            user.setCreatedBy(userRepository.findById(createdById).orElse(null));
+        }
 
         User saved = userRepository.save(user);
         return mapToDto(saved);
@@ -60,7 +69,7 @@ public class UserService {
         existing.setPhone(dto.getPhone());
         existing.setAvatar(dto.getAvatar());
 
-        // Password change only if provided (handled separately in most cases)
+        // Password update is handled separately (see changePassword)
         User saved = userRepository.save(existing);
         return mapToDto(saved);
     }
@@ -73,13 +82,14 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserEntity(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
     }
 
     @Transactional(readOnly = true)
     public UserDto getUserByEmail(String email) {
-        return mapToDto(userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found")));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        return mapToDto(user);
     }
 
     @Transactional(readOnly = true)
@@ -90,6 +100,13 @@ public class UserService {
     }
 
     @Transactional
+    public void activateUser(UUID id) {
+        User user = getUserEntity(id);
+        user.setActive(true);
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void deactivateUser(UUID id) {
         User user = getUserEntity(id);
         user.setActive(false);
@@ -97,13 +114,18 @@ public class UserService {
     }
 
     @Transactional
-    public void activateUser(UUID id) {
+    public void changePassword(UUID id, String oldPassword, String newPassword) {
         User user = getUserEntity(id);
-        user.setActive(true);
+
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
 
-    // For password reset / verification flows (called from AuthService)
+    // Called by AuthService for reset flow
     @Transactional
     public void setPasswordResetToken(UUID userId, String token, LocalDateTime expires) {
         User user = getUserEntity(userId);
@@ -112,7 +134,8 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public UserDto mapToDto(User user) {   // ← change private → public
+    // Public mapping method - used by AuthService too
+    public UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
