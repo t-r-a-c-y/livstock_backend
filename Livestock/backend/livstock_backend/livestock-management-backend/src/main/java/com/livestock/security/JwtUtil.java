@@ -15,48 +15,42 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:3600000}")  // default 1 hour
+    @Value("${jwt.expiration:3600000}")  // 1 hour default
     private long jwtExpirationMs;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    // Generate token from authenticated user
     public String generateToken(Authentication authentication) {
-        String username = authentication.getName();   // email or username
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        String username = authentication.getName();
 
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey())
+                .subject(username)               // ← new way, no deprecated setSubject
+                .issuedAt(new Date())            // ← new way
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))  // ← new way
+                .signWith(getSigningKey())       // ← modern signWith
                 .compact();
     }
 
-    // Get username from token
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        return Jwts.parser()
+                .verifyWith(getSigningKey())     // ← new parser style
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.getSubject();
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
-    // Validate token
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            // Log error if needed
+            // You can log specific errors here if needed
             return false;
         }
     }
