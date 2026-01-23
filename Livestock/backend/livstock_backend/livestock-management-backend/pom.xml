@@ -70,6 +70,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+
+		<!-- Hibernate Types - for JSONB / JSON mapping -->
+		<dependency>
+			<groupId>com.vladmihalcea</groupId>
+			<artifactId>hibernate-types-60</artifactId>
+			<version>3.7.3</version>
+		</dependency>
+
 		<!-- OpenAPI / Swagger -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
