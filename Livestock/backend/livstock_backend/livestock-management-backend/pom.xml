@@ -73,7 +73,6 @@
 		<dependency>
 			<groupId>com.vladmihalcea</groupId>
 			<artifactId>hibernate-types-60</artifactId>
-			<version>${hibernate-types.version}</version>
 		</dependency>
 
 		<!-- OpenAPI / Swagger UI -->
