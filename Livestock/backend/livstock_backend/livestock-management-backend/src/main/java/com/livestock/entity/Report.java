@@ -1,18 +1,18 @@
 package com.livestock.entity;
 
-import com.livestock.entity.enums.ReportStatus;
-import com.livestock.entity.enums.ReportType;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;  // ← Add this import
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-
+import com.livestock.entity.enums.*;
 
 @Entity
 @Table(name = "reports")
@@ -30,7 +30,6 @@ public class Report {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private ReportType type;
 
     @Column(nullable = false)
@@ -39,9 +38,11 @@ public class Report {
     @Column(nullable = false)
     private LocalDate dateTo;
 
+    @Type(JsonBinaryType.class)                // ← Required for jsonb
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> filters;
 
+    @Type(JsonBinaryType.class)                // ← Required for jsonb
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> data;
 
