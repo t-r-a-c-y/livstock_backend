@@ -1,11 +1,11 @@
 package com.livestock.entity;
 
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;  // ← Add this import
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,12 +38,14 @@ public class Report {
     @Column(nullable = false)
     private LocalDate dateTo;
 
-    @Type(JsonBinaryType.class)                // ← Required for jsonb
-    @Column(columnDefinition = "jsonb")
+    // JSONB field for filters
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb", nullable = true)
     private Map<String, Object> filters;
 
-    @Type(JsonBinaryType.class)                // ← Required for jsonb
-    @Column(columnDefinition = "jsonb")
+    // JSONB field for generated report data
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb", nullable = true)
     private Map<String, Object> data;
 
     @Enumerated(EnumType.STRING)
