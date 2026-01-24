@@ -69,10 +69,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Hibernate Types - fixes JSONB / Map<String, Object> mapping -->
+
+
 		<dependency>
 			<groupId>com.vladmihalcea</groupId>
 			<artifactId>hibernate-types-60</artifactId>
+			<version>3.7.3</version>
 		</dependency>
 
 		<!-- OpenAPI / Swagger UI -->
