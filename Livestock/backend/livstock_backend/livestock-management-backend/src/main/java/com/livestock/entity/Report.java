@@ -1,5 +1,6 @@
 package com.livestock.entity;
 
+import com.livestock.exception.JsonbMapConverter;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.Data;
