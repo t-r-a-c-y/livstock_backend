@@ -40,15 +40,11 @@ public class Report {
     @Column(nullable = false)
     private LocalDate dateTo;
 
-
-
-// ... in Report class ...
-
-    @Type(JsonBinaryType.class)
+    @Convert(converter = JsonbMapConverter.class)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> filters;
 
-    @Type(JsonBinaryType.class)
+    @Convert(converter = JsonbMapConverter.class)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> data;
 
