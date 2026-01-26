@@ -1,14 +1,10 @@
 package com.livestock.entity;
 
-import com.livestock.exception.JsonbMapConverter;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.livestock.converter.JsonbMapConverter;  // ← new import
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
-//import io.github.vladimihalcea.hibernate.type.json.JsonBinaryType;
-
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,11 +38,11 @@ public class Report {
     private LocalDate dateTo;
 
     @Convert(converter = JsonbMapConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb", nullable = true)
     private Map<String, Object> filters;
 
     @Convert(converter = JsonbMapConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb", nullable = true)
     private Map<String, Object> data;
 
     @Enumerated(EnumType.STRING)
