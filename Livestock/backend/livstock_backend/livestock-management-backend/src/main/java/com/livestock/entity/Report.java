@@ -6,6 +6,8 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
+//import io.github.vladimihalcea.hibernate.type.json.JsonBinaryType;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,14 +40,16 @@ public class Report {
     @Column(nullable = false)
     private LocalDate dateTo;
 
-    // JSONB field for filters
+
+
+// ... in Report class ...
+
     @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb", nullable = true)
+    @Column(columnDefinition = "jsonb")
     private Map<String, Object> filters;
 
-    // JSONB field for generated report data
     @Type(JsonBinaryType.class)
-    @Column(columnDefinition = "jsonb", nullable = true)
+    @Column(columnDefinition = "jsonb")
     private Map<String, Object> data;
 
     @Enumerated(EnumType.STRING)
