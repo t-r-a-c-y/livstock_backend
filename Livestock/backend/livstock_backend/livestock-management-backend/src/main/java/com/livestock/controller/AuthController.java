@@ -44,4 +44,12 @@ public class AuthController {
         authService.resetPassword(token, newPassword);
         return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
+    @PostMapping("/change-password-first")
+    public ResponseEntity<String> changePasswordFirst(
+            @RequestBody ChangePasswordFirstDto dto,
+            Authentication authentication) {
+        String currentUserEmail = authentication.getName(); // or from principal
+        authService.changePasswordOnFirstLogin(dto, currentUserEmail);
+        return ResponseEntity.ok("Password changed successfully. Please log in again.");
+    }
 }
