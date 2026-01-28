@@ -26,7 +26,7 @@ public class OwnerController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF','VIEWER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','STAFF')")
     public ResponseEntity<ApiResponse<OwnerDto>> getOwnerById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(ownerService.getOwnerById(id)));
     }
