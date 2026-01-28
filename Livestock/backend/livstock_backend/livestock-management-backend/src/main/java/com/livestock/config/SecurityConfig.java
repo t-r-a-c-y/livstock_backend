@@ -1,4 +1,4 @@
-package com.livestock.config;  // ← keep this package or adjust
+package com.livestock.config;
 
 import com.livestock.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -23,13 +24,20 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
+
+    // ───────────────────────────────────────────────────────────────
+    //  ADD THIS: Explicit PasswordEncoder bean (fixes your error)
+    // ───────────────────────────────────────────────────────────────
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);  // 12 strength is good balance
+    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
@@ -42,9 +50,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable()) // ← add your CORS config later if needed
+                .cors(cors -> cors.disable()) // configure properly later if needed
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public - no auth required
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
@@ -55,10 +63,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Protected endpoints
+                        // Protected - requires JWT + authenticated user
                         .requestMatchers("/api/auth/change-password-first").authenticated()
 
-                        // Everything else requires auth
+                        // All other endpoints require auth
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
