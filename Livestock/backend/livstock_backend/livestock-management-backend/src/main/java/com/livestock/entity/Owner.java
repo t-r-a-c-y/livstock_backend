@@ -2,6 +2,7 @@ package com.livestock.entity;// Owner.java
 
 
 import com.livestock.entity.FinancialRecord;
+import com.livestock.entity.enums.OwnerStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,6 +17,13 @@ import java.util.UUID;
 @Table(name = "owners")
 @Data
 public class Owner {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OwnerStatus status = OwnerStatus.PENDING;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id")
+    private User linkedUser;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -61,4 +69,5 @@ public class Owner {
 
     @OneToMany(mappedBy = "owner")
     private List<FinancialRecord> financialRecords = new ArrayList<>();
+
 }
