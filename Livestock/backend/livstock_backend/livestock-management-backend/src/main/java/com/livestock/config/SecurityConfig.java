@@ -1,4 +1,4 @@
-package com.livestock.config;
+package com.livestock.config;  // ← keep this package or adjust
 
 import com.livestock.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +25,6 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    // ───────────────────────────────────────────────────────────────
-    //  The bean you asked about — put it here!
-    // ───────────────────────────────────────────────────────────────
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -36,20 +33,18 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // Optional: expose AuthenticationManager as bean (needed for some JWT setups)
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // Full security filter chain (protects your endpoints)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable()) // or configure properly
+                .cors(cors -> cors.disable()) // ← add your CORS config later if needed
                 .authorizeHttpRequests(auth -> auth
-                        // Public: no token needed
+                        // Public endpoints
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
@@ -60,15 +55,13 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Protected: must be logged in
+                        // Protected endpoints
                         .requestMatchers("/api/auth/change-password-first").authenticated()
 
-                        // All other endpoints require auth
+                        // Everything else requires auth
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
