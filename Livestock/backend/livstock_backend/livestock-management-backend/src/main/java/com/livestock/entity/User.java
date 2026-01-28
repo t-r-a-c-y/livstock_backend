@@ -68,4 +68,6 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    private boolean mustChangePassword = false;
 }
