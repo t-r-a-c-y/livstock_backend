@@ -1,9 +1,6 @@
 package com.livestock.service;
 
-import com.livestock.dto.LoginRequestDto;
-import com.livestock.dto.LoginResponseDto;
-import com.livestock.dto.RegisterRequestDto;
-import com.livestock.dto.UserDto;
+import com.livestock.dto.*;
 import com.livestock.entity.User;
 import com.livestock.entity.enums.Role;
 import com.livestock.repository.UserRepository;
@@ -31,7 +28,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     /**
-     * Authenticates a user and returns a JWT token along with user details.
+     * Authenticates a user and returns a JWT token + user details.
+     * If this is the first login (mustChangePassword = true), the response will include
+     * a flag telling the frontend to force a password change.
      */
     @Transactional(readOnly = true)
     public LoginResponseDto login(LoginRequestDto request) {
@@ -59,15 +58,14 @@ public class AuthService {
         LoginResponseDto response = new LoginResponseDto();
         response.setToken(token);
         response.setUser(userDto);
+        response.setMustChangePassword(user.isMustChangePassword());  // ← new flag
 
         return response;
     }
 
     /**
-     * Registers a new user.
-     * - Encodes the plain password
-     * - Checks for email uniqueness
-     * - Uses default role STAFF if none provided
+     * Registers a new user (used for manual/staff registration).
+     * Owners are created automatically via OwnerService — not here.
      */
     @Transactional
     public UserDto register(RegisterRequestDto request) {
@@ -84,26 +82,61 @@ public class AuthService {
             throw new IllegalArgumentException("Email is already registered");
         }
 
-        // Encode password **once** here
+        // Encode password once
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // Determine role (default to STAFF if not provided)
+        // Default role = STAFF if not provided
         Role role = request.getRole() != null ? request.getRole() : Role.STAFF;
 
-        // Create user via UserService (pass already encoded password)
-        return userService.createUser(
+        // Create user (pass already encoded password)
+        UserDto createdUser = userService.createUser(
                 request.getEmail(),
-                encodedPassword,          // ← already encoded
+                encodedPassword,
                 request.getFirstName(),
                 request.getLastName(),
                 role,
                 request.getPhone(),
-                null                      // createdById = null for self-registration
+                null  // createdById = null for self-registration
         );
+
+        // For normal registrations, no forced password change
+        return createdUser;
     }
 
     /**
-     * Initiates password reset by generating a token and (later) sending email.
+     * Allows a user who has mustChangePassword=true to change their password on first login.
+     * This is typically called after successful login when the frontend sees the flag.
+     */
+    @Transactional
+    public void changePasswordOnFirstLogin(ChangePasswordFirstDto dto, String currentUserEmail) {
+        User user = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Only allowed if mustChangePassword is true
+        if (!user.isMustChangePassword()) {
+            throw new IllegalStateException("Password change is not required for this account");
+        }
+
+        // Validate current (temporary) password
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Validate new password strength
+        if (dto.getNewPassword() == null || dto.getNewPassword().length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters long");
+        }
+
+        // Update password and reset flag
+        user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
+        user.setMustChangePassword(false);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
+
+    /**
+     * Initiates password reset (forgot password flow) — unchanged
      */
     @Transactional
     public void initiatePasswordReset(String email) {
@@ -116,11 +149,11 @@ public class AuthService {
         userService.setPasswordResetToken(user.getId(), resetToken, expires);
 
         // TODO: Send email with reset link
-        // Example: notificationService.sendPasswordResetEmail(user.getEmail(), resetToken);
+        // notificationService.sendPasswordResetEmail(user.getEmail(), resetToken);
     }
 
     /**
-     * Completes password reset using the provided token.
+     * Completes password reset using the provided token — unchanged
      */
     @Transactional
     public void resetPassword(String token, String newPassword) {
@@ -136,10 +169,10 @@ public class AuthService {
             throw new IllegalArgumentException("Reset token has expired");
         }
 
-        // Update password (encode it)
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setPasswordResetToken(null);
         user.setPasswordResetExpires(null);
+        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
     }
