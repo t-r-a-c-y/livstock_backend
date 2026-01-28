@@ -24,7 +24,7 @@ public class UserService {
     @Transactional
     public UserDto createUser(
             String email,
-            String rawPassword,
+            String encodedPassword,
             String firstName,
             String lastName,
             Role role,
@@ -37,7 +37,7 @@ public class UserService {
 
         User user = new User();
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        user.setPasswordHash(encodedPassword);
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setRole(role);
