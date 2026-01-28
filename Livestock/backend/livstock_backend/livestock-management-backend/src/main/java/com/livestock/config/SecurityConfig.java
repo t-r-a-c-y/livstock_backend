@@ -4,10 +4,15 @@ import com.livestock.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -17,27 +22,34 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
-    private final AuthenticationProvider authenticationProvider;
+    private final UserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
+    // ───────────────────────────────────────────────────────────────
+    //  The bean you asked about — put it here!
+    // ───────────────────────────────────────────────────────────────
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    }
+
+    // Optional: expose AuthenticationManager as bean (needed for some JWT setups)
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    // Full security filter chain (protects your endpoints)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CSRF (stateless JWT API)
                 .csrf(csrf -> csrf.disable())
-
-                // CORS (add your config if needed)
-                .cors(cors -> cors.configurationSource(request -> {
-                    var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:3000", "http://localhost:5173"));
-                    corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    corsConfig.setAllowedHeaders(java.util.List.of("*"));
-                    corsConfig.setAllowCredentials(true);
-                    return corsConfig;
-                }))
-
-                // Authorization rules
+                .cors(cors -> cors.disable()) // or configure properly
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints - no token needed
+                        // Public: no token needed
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
@@ -48,20 +60,16 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Protected: must be authenticated
+                        // Protected: must be logged in
                         .requestMatchers("/api/auth/change-password-first").authenticated()
 
-                        // All other endpoints require authentication
+                        // All other endpoints require auth
                         .anyRequest().authenticated()
                 )
-
-                // Stateless session (no cookies/sessions)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // Add your JWT filter before UsernamePasswordAuthenticationFilter
-                .authenticationProvider(authenticationProvider)
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
