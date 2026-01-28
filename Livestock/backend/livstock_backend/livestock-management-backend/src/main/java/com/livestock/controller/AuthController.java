@@ -69,35 +69,32 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordFirstDto dto,
             @AuthenticationPrincipal User user) {
 
-        // Safety check: ensure user is authenticated
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Unauthorized - please log in first", "UNAUTHENTICATED"));
         }
 
-        // Only proceed if this is a first-login scenario
         if (!user.isMustChangePassword()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Password change is not required for this account", "NO_CHANGE_NEEDED"));
         }
 
-        // Verify current (temporary) password
+        // Verify current password
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPasswordHash())) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Current password is incorrect", "INVALID_CREDENTIALS"));
         }
 
-        // Validate new password strength
+        // Validate new password
         if (dto.getNewPassword() == null || dto.getNewPassword().length() < 8) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("New password must be at least 8 characters long", "WEAK_PASSWORD"));
         }
 
-        // Perform the password change
         authService.changePasswordOnFirstLogin(dto, user.getEmail());
 
         return ResponseEntity.ok(
-                ApiResponse.success(null, "Password updated successfully. Please log in again with your new password.")
+                ApiResponse.success(null, "Password updated successfully. Please log in again.")
         );
     }
 }
