@@ -20,4 +20,6 @@ public class OwnerDto {
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String status;          // e.g. "PENDING", "ACTIVE"
+    private UUID linkedUserId;      // optional
 }
