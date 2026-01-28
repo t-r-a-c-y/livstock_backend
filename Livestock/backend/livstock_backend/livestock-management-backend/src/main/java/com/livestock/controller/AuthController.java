@@ -5,11 +5,11 @@ import com.livestock.entity.User;
 import com.livestock.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,10 +17,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class AuthController {
 
     private final AuthService authService;
-    private final PasswordEncoder passwordEncoder;  // if needed directly in controller (optional)
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Authenticates a user and returns JWT + user details
+     * Authenticate user and return JWT token + user info.
+     * Includes mustChangePassword flag for first-time login (e.g., auto-created owners).
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
@@ -29,7 +30,8 @@ public class AuthController {
     }
 
     /**
-     * Registers a new user (manual/staff registration)
+     * Register a new user (manual/staff registration).
+     * Owners are auto-created via OwnerService — not here.
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequestDto request) {
@@ -38,56 +40,64 @@ public class AuthController {
     }
 
     /**
-     * Initiates forgot password flow (sends reset link/token)
+     * Initiate forgot-password flow (send reset token/link).
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email) {
         authService.initiatePasswordReset(email);
-        return ResponseEntity.ok(ApiResponse.success(null, "Password reset link sent to email"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset link sent to your email"));
     }
 
     /**
-     * Completes password reset using the token
+     * Reset password using a valid reset token.
      */
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @RequestParam String token,
             @RequestParam String newPassword) {
+
         authService.resetPassword(token, newPassword);
         return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
 
     /**
-     * Endpoint called when user must change password on first login
-     * (triggered after login when mustChangePassword = true)
+     * Endpoint for forced password change on first login.
+     * Called after login when mustChangePassword = true.
      */
     @PostMapping("/change-password-first")
     public ResponseEntity<ApiResponse<Void>> changePasswordFirst(
             @Valid @RequestBody ChangePasswordFirstDto dto,
-            @AuthenticationPrincipal User user) {   // ← cleaner than Authentication + cast
+            @AuthenticationPrincipal User user) {
 
-        // Verify this is a first-login scenario
+        // Safety check: ensure user is authenticated
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized - please log in first", "UNAUTHENTICATED"));
+        }
+
+        // Only proceed if this is a first-login scenario
         if (!user.isMustChangePassword()) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Password change is not required for this account"));
+                    .body(ApiResponse.error("Password change is not required for this account", "NO_CHANGE_NEEDED"));
         }
 
-        // Validate current (temporary) password
+        // Verify current (temporary) password
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPasswordHash())) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Current password is incorrect"));
+                    .body(ApiResponse.error("Current password is incorrect", "INVALID_CREDENTIALS"));
         }
 
-        // Validate new password
+        // Validate new password strength
         if (dto.getNewPassword() == null || dto.getNewPassword().length() < 8) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("New password must be at least 8 characters long"));
+                    .body(ApiResponse.error("New password must be at least 8 characters long", "WEAK_PASSWORD"));
         }
 
-        // Perform the change via service
+        // Perform the password change
         authService.changePasswordOnFirstLogin(dto, user.getEmail());
 
-        return ResponseEntity.ok(ApiResponse.success(null,
-                "Password updated successfully. Please log in again with your new password."));
+        return ResponseEntity.ok(
+                ApiResponse.success(null, "Password updated successfully. Please log in again with your new password.")
+        );
     }
 }
