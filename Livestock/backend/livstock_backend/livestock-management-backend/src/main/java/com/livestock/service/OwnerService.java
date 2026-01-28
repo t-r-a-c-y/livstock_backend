@@ -1,6 +1,5 @@
 package com.livestock.service;
 
-import com.livestock.dto.OwnerCreateDto;
 import com.livestock.dto.OwnerDto;
 import com.livestock.entity.Owner;
 import com.livestock.entity.User;
@@ -26,26 +25,35 @@ public class OwnerService {
     private final OwnerRepository ownerRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    // Optional: if you have email service
-    // private final EmailService emailService;
 
+    /**
+     * Creates a new owner and automatically creates a linked user account with VIEWER role.
+     * The new user gets a random temporary password and must change it on first login.
+     */
     @Transactional
-    public OwnerDto createOwner(OwnerCreateDto dto) {
+    public OwnerDto createOwner(OwnerDto dto) {
         // 1. Validate uniqueness
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
         if (ownerRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already in use by another owner");
+        }
+        if (dto.getPhone() == null || dto.getPhone().trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone is required");
         }
         if (ownerRepository.findByPhone(dto.getPhone()).isPresent()) {
             throw new IllegalArgumentException("Phone number already in use by another owner");
         }
-        if (ownerRepository.findByNationalId(dto.getNationalId()).isPresent()) {
+        if (dto.getNationalId() != null && !dto.getNationalId().trim().isEmpty() &&
+                ownerRepository.findByNationalId(dto.getNationalId()).isPresent()) {
             throw new IllegalArgumentException("National ID already registered");
         }
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already used for a system user");
+            throw new IllegalArgumentException("Email is already used for a system user");
         }
 
-        // 2. Create Owner entity
+        // 2. Create Owner entity (ignore id/timestamps from input)
         Owner owner = new Owner();
         owner.setName(dto.getName());
         owner.setEmail(dto.getEmail());
@@ -60,7 +68,7 @@ public class OwnerService {
         owner.setCreatedAt(LocalDateTime.now());
         owner.setUpdatedAt(LocalDateTime.now());
 
-        // 3. Auto-create linked User with VIEWER role
+        // 3. Auto-create linked User (VIEWER role + must change password)
         String tempPassword = generateSecureRandomPassword(12);
         String encodedTempPassword = passwordEncoder.encode(tempPassword);
 
@@ -75,52 +83,35 @@ public class OwnerService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
-        // Link bidirectional (if your entities have mappedBy)
+        // Link them (adjust based on your entity relationship)
         owner.setLinkedUser(user);
-        // user.setOwner(owner);  // uncomment if you have @ManyToOne or @OneToOne in User
+        // user.setOwner(owner);   // ← uncomment if User has @ManyToOne or @OneToOne to Owner
 
-        // 4. Save owner (cascades to user if configured)
+        // 4. Save owner (user is saved via cascade if configured)
         Owner savedOwner = ownerRepository.save(owner);
 
-        // 5. TODO: Send welcome email / SMS with temporary password
-        // emailService.sendOwnerWelcomeEmail(
-        //     dto.getEmail(),
-        //     dto.getName(),
-        //     tempPassword,
-        //     "https://your-app.com/change-password"
-        // );
+        // 5. Development / testing output — REMOVE BEFORE PRODUCTION!
+        System.out.println("=================================================================");
+        System.out.println("DEV ONLY - New owner created: " + dto.getEmail());
+        System.out.println("Temporary password (must be changed on first login): " + tempPassword);
+        System.out.println("=================================================================");
 
-        // For development/testing: log or return the temp password (REMOVE IN PRODUCTION!)
-        System.out.println("IMPORTANT (DEV ONLY): Temporary password for owner " +
-                dto.getEmail() + " → " + tempPassword);
+        // TODO: In production, send this via email/SMS instead of console
+        // emailService.sendOwnerWelcomeEmail(dto.getEmail(), dto.getName(), tempPassword);
 
         return mapToDto(savedOwner);
     }
 
-    @Transactional
-    public void activateOwnerAfterFirstLogin(UUID ownerId) {
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
-
-        if (owner.getStatus() != OwnerStatus.PENDING) {
-            throw new IllegalStateException("Owner is not in PENDING state");
-        }
-
-        owner.setStatus(OwnerStatus.ACTIVE);
-        owner.setUpdatedAt(LocalDateTime.now());
-        ownerRepository.save(owner);
-    }
-
-    // ───────────────────────────────────────────────
-    //          Existing methods (updated slightly)
-    // ───────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────
+    //                   Existing methods (lightly improved)
+    // ───────────────────────────────────────────────────────────────
 
     @Transactional
     public OwnerDto updateOwner(UUID id, OwnerDto dto) {
         Owner existing = ownerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
 
-        // Email/phone uniqueness check (skip if unchanged)
+        // Prevent changing to already-used email/phone
         if (!existing.getEmail().equals(dto.getEmail()) &&
                 ownerRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already in use");
@@ -155,7 +146,7 @@ public class OwnerService {
         Owner owner = ownerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
 
-        // Optional: delete linked user if desired
+        // Optional: also delete linked user (if you want cascade delete)
         if (owner.getLinkedUser() != null) {
             userRepository.delete(owner.getLinkedUser());
         }
@@ -163,9 +154,22 @@ public class OwnerService {
         ownerRepository.delete(owner);
     }
 
-    // ───────────────────────────────────────────────
-    //               Mapping & Helpers
-    // ───────────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public OwnerDto getOwnerByEmail(String email) {
+        return mapToDto(ownerRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Owner not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public List<OwnerDto> searchOwnersByName(String namePart) {
+        return ownerRepository.findByNameContainingIgnoreCase(namePart).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    //                      Mapping & Helper methods
+    // ───────────────────────────────────────────────────────────────
 
     private OwnerDto mapToDto(Owner owner) {
         OwnerDto dto = new OwnerDto();
@@ -179,13 +183,15 @@ public class OwnerService {
         dto.setBankAccount(owner.getBankAccount());
         dto.setEmergencyContact(owner.getEmergencyContact());
         dto.setNotes(owner.getNotes());
-        dto.setStatus(owner.getStatus().name());
         dto.setCreatedAt(owner.getCreatedAt());
         dto.setUpdatedAt(owner.getUpdatedAt());
 
-        // Optional: include linked user id
+        // Optional: expose status and linked user id
+        if (owner.getStatus() != null) {
+            dto.setStatus(owner.getStatus().name());  // add this field to OwnerDto if needed
+        }
         if (owner.getLinkedUser() != null) {
-            dto.setLinkedUserId(owner.getLinkedUser().getId());
+            dto.setLinkedUserId(owner.getLinkedUser().getId());  // add this field to OwnerDto if needed
         }
 
         return dto;
@@ -201,7 +207,7 @@ public class OwnerService {
         target.setBankAccount(source.getBankAccount());
         target.setEmergencyContact(source.getEmergencyContact());
         target.setNotes(source.getNotes());
-        // status is not updated here - use activateOwnerAfterFirstLogin()
+        // Do NOT update status here — use a separate activation method
     }
 
     private String generateSecureRandomPassword(int length) {
