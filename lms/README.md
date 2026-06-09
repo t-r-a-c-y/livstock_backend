@@ -54,6 +54,7 @@ MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
+OTP_LOG_TO_CONSOLE=true
 DEFAULT_ADMIN_EMAIL=admin@example.com
 DEFAULT_ADMIN_PASSWORD=ChangeMe123!
 ```
@@ -206,6 +207,7 @@ Export report:
 - Passwords are BCrypt-hashed.
 - OTP codes are hashed in the database and expire automatically.
 - OTP emails are sent using Spring Mail configuration from `.env`.
+- In local development, `OTP_LOG_TO_CONSOLE=true` prints the OTP in the terminal in case email delivery is not configured.
 - JWT protects all non-login endpoints.
 - Admin routes require `ADMIN`.
 - Owner routes require `OWNER`.

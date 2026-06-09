@@ -12,7 +12,9 @@ import com.example.livestock.service.EmailService;
 import com.example.livestock.service.NotificationService;
 import com.example.livestock.service.OtpService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class OtpServiceImpl implements OtpService {
     private final UserRepository userRepository;
     private final OtpTokenRepository otpTokenRepository;
@@ -33,6 +36,9 @@ public class OtpServiceImpl implements OtpService {
 
     @Value("${app.otp.expiration-minutes}")
     private long expirationMinutes;
+
+    @Value("${app.otp.log-to-console}")
+    private boolean logToConsole;
 
     @Override
     public void sendOtp(OtpRequest request) {
@@ -46,7 +52,14 @@ public class OtpServiceImpl implements OtpService {
         token.setExpiresAt(LocalDateTime.now().plusMinutes(expirationMinutes));
         otpTokenRepository.save(token);
 
-        emailService.sendOtp(user.getEmail(), user.getFullName(), code);
+        if (logToConsole) {
+            log.warn("DEV OTP for {} is {}. It expires in {} minutes.", user.getEmail(), code, expirationMinutes);
+        }
+        try {
+            emailService.sendOtp(user.getEmail(), user.getFullName(), code);
+        } catch (MailException ex) {
+            log.warn("OTP email could not be sent to {}. Use the terminal OTP above. Reason: {}", user.getEmail(), ex.getMessage());
+        }
         notificationService.notify(user, "OTP sent", "A login verification code was sent to your email.", NotificationType.OTP_SENT);
     }
 
