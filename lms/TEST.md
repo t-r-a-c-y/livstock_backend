@@ -5,7 +5,7 @@ Use this guide to test the backend from Swagger UI.
 Swagger URL:
 
 ```text
-http://localhost:8081/swagger-ui.html
+http://localhost:8081/swagger-ui.html/index.html
 ```
 
 Start the application first:
