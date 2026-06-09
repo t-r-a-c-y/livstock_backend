@@ -14,6 +14,7 @@ import com.example.livestock.report.ReportData;
 import com.example.livestock.report.ReportRow;
 import com.example.livestock.repository.*;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.NotificationService;
 import com.example.livestock.service.ReportService;
 import com.lowagie.text.Document;
@@ -56,6 +57,7 @@ public class ReportServiceImpl implements ReportService {
     private final ReportLogRepository reportLogRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Override
     public ResponseEntity<Resource> export(ReportRequest request) {
@@ -77,6 +79,8 @@ public class ReportServiceImpl implements ReportService {
         log.setFilePath(filename);
         reportLogRepository.save(log);
         notificationService.notify(user, "Report generated", data.title() + " is ready for download.", NotificationType.REPORT_READY);
+        auditLogService.record("GENERATE_REPORT", "ReportLog", log.getId(), user,
+                data.title() + " generated as " + request.exportFormat());
 
         MediaType mediaType = request.exportFormat() == ExportFormat.PDF ? MediaType.APPLICATION_PDF : MediaType.parseMediaType("text/csv");
         return ResponseEntity.ok()

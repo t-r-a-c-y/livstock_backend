@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface OtpTokenRepository extends JpaRepository<OtpToken, Long> {
     Optional<OtpToken> findTopByUserEmailAndActiveTrueAndUsedFalseOrderByCreatedAtDesc(String email);
+    Optional<OtpToken> findTopByUserEmailAndPurposeAndActiveTrueAndUsedFalseOrderByCreatedAtDesc(String email, String purpose);
 }

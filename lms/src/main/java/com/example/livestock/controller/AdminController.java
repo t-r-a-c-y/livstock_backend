@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
+    private final UserService userService;
     private final OwnerService ownerService;
     private final AnimalService animalService;
     private final BreedingRecordService breedingRecordService;
@@ -22,6 +23,22 @@ public class AdminController {
     private final VaccinationRecordService vaccinationRecordService;
     private final MessageService messageService;
     private final ReportService reportService;
+    private final AuditLogService auditLogService;
+
+    @GetMapping("/users")
+    public Page<UserResponse> users(@RequestParam(defaultValue = "false") boolean includeInactive, Pageable pageable) {
+        return userService.findAll(includeInactive, pageable);
+    }
+
+    @PatchMapping("/users/{id}/inactive")
+    public UserResponse deactivateUser(@PathVariable Long id) {
+        return userService.deactivate(id);
+    }
+
+    @PatchMapping("/users/{id}/active")
+    public UserResponse activateUser(@PathVariable Long id) {
+        return userService.activate(id);
+    }
 
     @PostMapping("/owners")
     public ResponseEntity<OwnerResponse> createOwner(@Valid @RequestBody OwnerRequest request) {
@@ -38,9 +55,9 @@ public class AdminController {
         return ownerService.update(id, request);
     }
 
-    @DeleteMapping("/owners/{id}")
+    @PatchMapping("/owners/{id}/inactive")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivateOwner(@PathVariable Long id) {
+    public void inactivateOwner(@PathVariable Long id) {
         ownerService.deactivate(id);
     }
 
@@ -62,6 +79,12 @@ public class AdminController {
     @DeleteMapping("/animals/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivateAnimal(@PathVariable Long id) {
+        animalService.deactivate(id);
+    }
+
+    @PatchMapping("/animals/{id}/inactive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void inactivateAnimal(@PathVariable Long id) {
         animalService.deactivate(id);
     }
 
@@ -118,5 +141,10 @@ public class AdminController {
     @GetMapping("/report-logs")
     public Page<ReportLogResponse> reportLogs(Pageable pageable) {
         return reportService.logs(pageable);
+    }
+
+    @GetMapping("/audit-logs")
+    public Page<AuditLogResponse> auditLogs(Pageable pageable) {
+        return auditLogService.findAll(pageable);
     }
 }

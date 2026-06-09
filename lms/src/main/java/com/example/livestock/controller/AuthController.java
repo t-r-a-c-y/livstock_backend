@@ -5,6 +5,7 @@ import com.example.livestock.dto.AuthResponse;
 import com.example.livestock.dto.ApiMessageResponse;
 import com.example.livestock.dto.OtpRequest;
 import com.example.livestock.dto.OtpVerifyRequest;
+import com.example.livestock.dto.LoginOtpVerifyRequest;
 import com.example.livestock.service.AuthService;
 import com.example.livestock.service.OtpService;
 import jakarta.validation.Valid;
@@ -23,8 +24,13 @@ public class AuthController {
     private final OtpService otpService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+    public ResponseEntity<ApiMessageResponse> login(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/login/verify")
+    public ResponseEntity<AuthResponse> verifyLoginOtp(@Valid @RequestBody LoginOtpVerifyRequest request) {
+        return ResponseEntity.ok(authService.verifyLoginOtp(request));
     }
 
     @PostMapping("/otp/request")

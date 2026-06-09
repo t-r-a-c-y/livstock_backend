@@ -10,6 +10,7 @@ import com.example.livestock.repository.AnimalRepository;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.repository.VaccinationRecordRepository;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.NotificationService;
 import com.example.livestock.service.VaccinationRecordService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class VaccinationRecordServiceImpl implements VaccinationRecordService {
     private final OwnerRepository ownerRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Override
     public VaccinationRecordResponse create(VaccinationRecordRequest request) {
@@ -45,6 +47,8 @@ public class VaccinationRecordServiceImpl implements VaccinationRecordService {
         VaccinationRecord saved = vaccinationRecordRepository.save(record);
         notificationService.notify(animal.getOwner().getUser(), "Vaccination record added",
                 "Vaccination information was added for " + animal.getTagNumber(), NotificationType.HEALTH_UPDATE);
+        auditLogService.record("CREATE_VACCINATION_RECORD", "VaccinationRecord", saved.getId(), currentUserService.getCurrentUser(),
+                "Vaccination record added for " + animal.getTagNumber());
         return DtoMapper.toVaccination(saved);
     }
 

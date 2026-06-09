@@ -61,7 +61,7 @@ DEFAULT_ADMIN_PASSWORD=ChangeMe123!
 
 ## Authentication
 
-Login:
+Login now verifies the password and sends an OTP. It does not return a token yet.
 
 ```http
 POST /api/auth/login
@@ -75,11 +75,21 @@ Content-Type: application/json
 }
 ```
 
-Use the returned JWT:
+Verify login OTP to receive the JWT:
 
 ```http
-Authorization: Bearer <token>
+POST /api/auth/login/verify
+Content-Type: application/json
 ```
+
+```json
+{
+  "email": "admin@livestock.local",
+  "code": "123456"
+}
+```
+
+Use the returned JWT as `Authorization: Bearer <token>`.
 
 Request OTP:
 
@@ -108,12 +118,17 @@ Content-Type: application/json
 }
 ```
 
+The standalone OTP endpoints are useful for testing OTP delivery. The real login flow is `/api/auth/login` followed by `/api/auth/login/verify`.
+
 ## Main Admin Endpoints
 
 - `POST /api/admin/owners`
 - `GET /api/admin/owners`
+- `GET /api/admin/users`
+- `PATCH /api/admin/users/{id}/inactive`
+- `PATCH /api/admin/users/{id}/active`
 - `PUT /api/admin/owners/{id}`
-- `DELETE /api/admin/owners/{id}`
+- `PATCH /api/admin/owners/{id}/inactive`
 - `POST /api/admin/animals`
 - `GET /api/admin/animals?includeInactive=false`
 - `PUT /api/admin/animals/{id}`
@@ -127,6 +142,7 @@ Content-Type: application/json
 - `POST /api/admin/messages/reply`
 - `POST /api/admin/reports/export`
 - `GET /api/admin/report-logs`
+- `GET /api/admin/audit-logs`
 
 ## Main Owner Endpoints
 

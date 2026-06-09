@@ -18,6 +18,7 @@ import com.example.livestock.repository.MessageRepository;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.repository.UserRepository;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.MessageService;
 import com.example.livestock.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Override
     public MessageResponse sendToAdmin(MessageRequest request) {
@@ -58,6 +60,8 @@ public class MessageServiceImpl implements MessageService {
         message.setMessageBody(request.messageBody());
         Message saved = messageRepository.save(message);
         notificationService.notify(admin, "Message received", ownerUser.getFullName() + " sent a message", NotificationType.MESSAGE_RECEIVED);
+        auditLogService.record("SEND_MESSAGE", "Message", saved.getId(), ownerUser,
+                ownerUser.getEmail() + " sent a message to admin");
         return DtoMapper.toMessage(saved);
     }
 
@@ -80,6 +84,8 @@ public class MessageServiceImpl implements MessageService {
         reply.setMessageStatus(MessageStatus.REPLIED);
         Message saved = messageRepository.save(reply);
         notificationService.notify(original.getSender(), "Admin replied", "Admin replied to: " + original.getSubject(), NotificationType.MESSAGE_RECEIVED);
+        auditLogService.record("REPLY_MESSAGE", "Message", saved.getId(), admin,
+                "Admin replied to " + original.getSender().getEmail());
         return DtoMapper.toMessage(saved);
     }
 

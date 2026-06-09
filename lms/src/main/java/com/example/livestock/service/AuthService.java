@@ -2,7 +2,10 @@ package com.example.livestock.service;
 
 import com.example.livestock.dto.AuthRequest;
 import com.example.livestock.dto.AuthResponse;
+import com.example.livestock.dto.ApiMessageResponse;
+import com.example.livestock.dto.LoginOtpVerifyRequest;
 
 public interface AuthService {
-    AuthResponse login(AuthRequest request);
+    ApiMessageResponse login(AuthRequest request);
+    AuthResponse verifyLoginOtp(LoginOtpVerifyRequest request);
 }

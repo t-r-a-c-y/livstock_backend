@@ -12,6 +12,7 @@ import com.example.livestock.mapper.DtoMapper;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.repository.UserRepository;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ public class OwnerServiceImpl implements OwnerService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserService currentUserService;
+    private final AuditLogService auditLogService;
 
     @Override
     public OwnerResponse create(OwnerRequest request) {
@@ -49,7 +51,10 @@ public class OwnerServiceImpl implements OwnerService {
         owner.setUser(user);
         owner.setNationalId(request.nationalId());
         owner.setAddress(request.address());
-        return DtoMapper.toOwner(ownerRepository.save(owner));
+        Owner saved = ownerRepository.save(owner);
+        auditLogService.record("CREATE_OWNER", "Owner", saved.getId(), currentUserService.getCurrentUser(),
+                saved.getUser().getEmail() + " was created");
+        return DtoMapper.toOwner(saved);
     }
 
     @Override
@@ -65,6 +70,8 @@ public class OwnerServiceImpl implements OwnerService {
         owner.setAddress(request.address());
         owner.getUser().setFullName(request.user().fullName());
         owner.getUser().setPhoneNumber(request.user().phoneNumber());
+        auditLogService.record("UPDATE_OWNER", "Owner", owner.getId(), currentUserService.getCurrentUser(),
+                owner.getUser().getEmail() + " was updated");
         return DtoMapper.toOwner(owner);
     }
 
@@ -74,6 +81,8 @@ public class OwnerServiceImpl implements OwnerService {
         owner.setActive(false);
         owner.getUser().setActive(false);
         owner.getUser().setAccountStatus(AccountStatus.DISABLED);
+        auditLogService.record("INACTIVATE_OWNER", "Owner", owner.getId(), currentUserService.getCurrentUser(),
+                owner.getUser().getEmail() + " was inactivated");
     }
 
     @Override

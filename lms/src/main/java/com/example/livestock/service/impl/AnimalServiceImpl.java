@@ -11,6 +11,7 @@ import com.example.livestock.mapper.DtoMapper;
 import com.example.livestock.repository.AnimalRepository;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.AnimalService;
 import com.example.livestock.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AnimalServiceImpl implements AnimalService {
     private final OwnerRepository ownerRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Override
     public AnimalResponse create(AnimalRequest request) {
@@ -38,6 +40,8 @@ public class AnimalServiceImpl implements AnimalService {
         Animal saved = animalRepository.save(animal);
         notificationService.notify(saved.getOwner().getUser(), "Animal added",
                 saved.getTagNumber() + " was added to your livestock records.", NotificationType.ANIMAL_ADDED);
+        auditLogService.record("CREATE_ANIMAL", "Animal", saved.getId(), currentUserService.getCurrentUser(),
+                saved.getTagNumber() + " was added");
         return DtoMapper.toAnimal(saved);
     }
 
@@ -66,6 +70,8 @@ public class AnimalServiceImpl implements AnimalService {
             notificationService.notify(animal.getOwner().getUser(), "Animal status updated",
                     animal.getTagNumber() + " is now marked as " + animal.getAnimalStatus(), NotificationType.ANIMAL_STATUS_UPDATE);
         }
+        auditLogService.record("UPDATE_ANIMAL", "Animal", animal.getId(), currentUserService.getCurrentUser(),
+                animal.getTagNumber() + " was updated");
         return DtoMapper.toAnimal(animal);
     }
 
@@ -74,6 +80,8 @@ public class AnimalServiceImpl implements AnimalService {
         Animal animal = animalRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Animal not found"));
         animal.setActive(false);
+        auditLogService.record("INACTIVATE_ANIMAL", "Animal", animal.getId(), currentUserService.getCurrentUser(),
+                animal.getTagNumber() + " was inactivated");
     }
 
     private void apply(Animal animal, AnimalRequest request) {

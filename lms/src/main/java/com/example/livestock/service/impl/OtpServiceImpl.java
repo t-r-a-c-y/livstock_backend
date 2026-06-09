@@ -42,7 +42,16 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public void sendOtp(OtpRequest request) {
-        var user = userRepository.findByEmailAndActiveTrue(request.email())
+        sendOtpForPurpose(request.email(), "GENERAL");
+    }
+
+    @Override
+    public void sendLoginOtp(String email) {
+        sendOtpForPurpose(email, "LOGIN");
+    }
+
+    private void sendOtpForPurpose(String email, String purpose) {
+        var user = userRepository.findByEmailAndActiveTrue(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         String code = String.format("%06d", secureRandom.nextInt(1_000_000));
 
@@ -50,10 +59,11 @@ public class OtpServiceImpl implements OtpService {
         token.setUser(user);
         token.setCodeHash(passwordEncoder.encode(code));
         token.setExpiresAt(LocalDateTime.now().plusMinutes(expirationMinutes));
+        token.setPurpose(purpose);
         otpTokenRepository.save(token);
 
         if (logToConsole) {
-            log.warn("DEV OTP for {} is {}. It expires in {} minutes.", user.getEmail(), code, expirationMinutes);
+            log.warn("DEV {} OTP for {} is {}. It expires in {} minutes.", purpose, user.getEmail(), code, expirationMinutes);
         }
         try {
             emailService.sendOtp(user.getEmail(), user.getFullName(), code);
@@ -65,7 +75,16 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public void verify(OtpVerifyRequest request) {
-        OtpToken token = otpTokenRepository.findTopByUserEmailAndActiveTrueAndUsedFalseOrderByCreatedAtDesc(request.email())
+        verifyForPurpose(request, "GENERAL");
+    }
+
+    @Override
+    public void verifyLoginOtp(OtpVerifyRequest request) {
+        verifyForPurpose(request, "LOGIN");
+    }
+
+    private void verifyForPurpose(OtpVerifyRequest request, String purpose) {
+        OtpToken token = otpTokenRepository.findTopByUserEmailAndPurposeAndActiveTrueAndUsedFalseOrderByCreatedAtDesc(request.email(), purpose)
                 .orElseThrow(() -> new BadRequestException("Invalid or expired OTP"));
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             token.setActive(false);

@@ -34,6 +34,33 @@ Request body:
 Expected result:
 
 - Status `200`
+- Response says password was verified and OTP was sent
+- The OTP appears in the application terminal when `OTP_LOG_TO_CONSOLE=true`
+
+Do not authorize yet. You only get the token after verifying OTP.
+
+To get the token, open:
+
+```text
+POST /api/auth/login/verify
+```
+
+Request body:
+
+```json
+{
+  "email": "admin@livestock.local",
+  "code": "123456"
+}
+```
+
+Use the real terminal OTP.
+
+Important: do not use `POST /api/auth/otp/verify` for login. That endpoint is only for testing standalone OTP delivery and will not return a JWT token.
+
+Expected result:
+
+- Status `200`
 - Response contains a `token`
 - Role is `ADMIN`
 
@@ -45,7 +72,7 @@ In Swagger, click **Authorize** and enter:
 Bearer YOUR_ADMIN_TOKEN_HERE
 ```
 
-## 1A. Request And Verify OTP
+## 1A. Optional Standalone OTP Test
 
 Open:
 
@@ -64,7 +91,7 @@ Request body:
 Expected result:
 
 - Status `200`
-- OTP is sent to the configured email address
+- OTP is sent to the configured email address or printed in the terminal
 
 Open:
 
@@ -334,6 +361,26 @@ Request body:
 {
   "email": "jane.owner@example.com",
   "password": "Password123!"
+}
+```
+
+Expected result:
+
+- Status `200`
+- Response says password was verified and OTP was sent
+
+Open:
+
+```text
+POST /api/auth/login/verify
+```
+
+Request body:
+
+```json
+{
+  "email": "jane.owner@example.com",
+  "code": "123456"
 }
 ```
 
@@ -623,7 +670,7 @@ Authorize as admin.
 Open:
 
 ```text
-DELETE /api/admin/animals/{id}
+PATCH /api/admin/animals/{id}/inactive
 ```
 
 Expected result:

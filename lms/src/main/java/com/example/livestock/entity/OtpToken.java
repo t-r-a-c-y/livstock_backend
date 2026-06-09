@@ -27,4 +27,7 @@ public class OtpToken extends BaseEntity {
 
     @Column(nullable = false)
     private boolean used = false;
+
+    @Column(nullable = false)
+    private String purpose = "GENERAL";
 }

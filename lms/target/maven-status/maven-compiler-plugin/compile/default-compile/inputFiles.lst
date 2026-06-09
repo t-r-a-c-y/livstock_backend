@@ -9,12 +9,14 @@ C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\AnimalRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\AnimalResponse.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\ApiMessageResponse.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\AuditLogResponse.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\AuthRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\AuthResponse.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\BreedingRecordRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\BreedingRecordResponse.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\HealthRecordRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\HealthRecordResponse.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\LoginOtpVerifyRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\MessageReplyRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\MessageRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\MessageResponse.java
@@ -30,6 +32,7 @@ C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\VaccinationRecordRequest.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\dto\VaccinationRecordResponse.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\entity\Animal.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\entity\AuditLog.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\entity\BreedingRecord.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\entity\HealthRecord.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\entity\Message.java
@@ -58,6 +61,7 @@ C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\report\ReportData.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\report\ReportRow.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\repository\AnimalRepository.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\repository\AuditLogRepository.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\repository\BreedingRecordRepository.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\repository\HealthRecordRepository.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\repository\MessageRepository.java
@@ -74,11 +78,13 @@ C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\security\RateLimitFilter.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\security\UserPrincipal.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\AnimalService.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\AuditLogService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\AuthService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\BreedingRecordService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\EmailService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\HealthRecordService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\AnimalServiceImpl.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\AuditLogServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\AuthServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\BreedingRecordServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\EmailServiceImpl.java
@@ -88,10 +94,12 @@ C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\OtpServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\OwnerServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\ReportServiceImpl.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\UserServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\impl\VaccinationRecordServiceImpl.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\MessageService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\NotificationService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\OtpService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\OwnerService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\ReportService.java
+C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\UserService.java
 C:\Users\tracy\Documents\Year 3\project for year3\lms\src\main\java\com\example\livestock\service\VaccinationRecordService.java

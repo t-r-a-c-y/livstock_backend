@@ -13,6 +13,7 @@ import com.example.livestock.repository.AnimalRepository;
 import com.example.livestock.repository.BreedingRecordRepository;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.AuditLogService;
 import com.example.livestock.service.BreedingRecordService;
 import com.example.livestock.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class BreedingRecordServiceImpl implements BreedingRecordService {
     private final OwnerRepository ownerRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Override
     public BreedingRecordResponse create(BreedingRecordRequest request) {
@@ -38,6 +40,8 @@ public class BreedingRecordServiceImpl implements BreedingRecordService {
         BreedingRecord saved = breedingRecordRepository.save(record);
         notificationService.notify(saved.getCow().getOwner().getUser(), "Breeding record added",
                 "A breeding record was added for " + saved.getCow().getTagNumber(), NotificationType.BREEDING_UPDATE);
+        auditLogService.record("CREATE_BREEDING_RECORD", "BreedingRecord", saved.getId(), currentUserService.getCurrentUser(),
+                "Breeding record added for " + saved.getCow().getTagNumber());
         return DtoMapper.toBreeding(saved);
     }
 
@@ -52,6 +56,8 @@ public class BreedingRecordServiceImpl implements BreedingRecordService {
             notificationService.notify(record.getCow().getOwner().getUser(), "Birth recorded",
                     record.getCow().getTagNumber() + " produced offspring on " + record.getActualBirthDate(), NotificationType.BREEDING_UPDATE);
         }
+        auditLogService.record("UPDATE_BREEDING_RECORD", "BreedingRecord", record.getId(), currentUserService.getCurrentUser(),
+                "Breeding record updated for " + record.getCow().getTagNumber());
         return DtoMapper.toBreeding(record);
     }
 
