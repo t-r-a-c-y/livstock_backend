@@ -42,7 +42,7 @@ Default local admin:
 }
 ```
 
-Override configuration with environment variables:
+Configuration is in `src/main/resources/application.properties`. Local secrets can be kept in `.env`, which Spring imports automatically.
 
 ```bash
 DB_URL=jdbc:postgresql://localhost:5432/livestock
@@ -50,6 +50,10 @@ DB_USERNAME=postgres
 DB_PASSWORD=password
 DB_DRIVER=org.postgresql.Driver
 JWT_SECRET=replace-with-a-long-production-secret
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
 DEFAULT_ADMIN_EMAIL=admin@example.com
 DEFAULT_ADMIN_PASSWORD=ChangeMe123!
 ```
