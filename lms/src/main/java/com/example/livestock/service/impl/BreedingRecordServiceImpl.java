@@ -48,6 +48,10 @@ public class BreedingRecordServiceImpl implements BreedingRecordService {
         apply(record, request);
         notificationService.notify(record.getCow().getOwner().getUser(), "Breeding record updated",
                 "A breeding record was updated for " + record.getCow().getTagNumber(), NotificationType.BREEDING_UPDATE);
+        if (record.getActualBirthDate() != null) {
+            notificationService.notify(record.getCow().getOwner().getUser(), "Birth recorded",
+                    record.getCow().getTagNumber() + " produced offspring on " + record.getActualBirthDate(), NotificationType.BREEDING_UPDATE);
+        }
         return DtoMapper.toBreeding(record);
     }
 

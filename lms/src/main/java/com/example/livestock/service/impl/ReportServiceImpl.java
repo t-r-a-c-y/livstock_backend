@@ -6,6 +6,7 @@ import com.example.livestock.entity.Animal;
 import com.example.livestock.entity.ReportLog;
 import com.example.livestock.entity.User;
 import com.example.livestock.enums.ExportFormat;
+import com.example.livestock.enums.NotificationType;
 import com.example.livestock.enums.Role;
 import com.example.livestock.exception.ForbiddenException;
 import com.example.livestock.mapper.DtoMapper;
@@ -13,6 +14,7 @@ import com.example.livestock.report.ReportData;
 import com.example.livestock.report.ReportRow;
 import com.example.livestock.repository.*;
 import com.example.livestock.security.CurrentUserService;
+import com.example.livestock.service.NotificationService;
 import com.example.livestock.service.ReportService;
 import com.lowagie.text.Document;
 import com.lowagie.text.PageSize;
@@ -53,6 +55,7 @@ public class ReportServiceImpl implements ReportService {
     private final NotificationRepository notificationRepository;
     private final ReportLogRepository reportLogRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     @Override
     public ResponseEntity<Resource> export(ReportRequest request) {
@@ -73,6 +76,7 @@ public class ReportServiceImpl implements ReportService {
         log.setGeneratedAt(LocalDateTime.now());
         log.setFilePath(filename);
         reportLogRepository.save(log);
+        notificationService.notify(user, "Report generated", data.title() + " is ready for download.", NotificationType.REPORT_READY);
 
         MediaType mediaType = request.exportFormat() == ExportFormat.PDF ? MediaType.APPLICATION_PDF : MediaType.parseMediaType("text/csv");
         return ResponseEntity.ok()

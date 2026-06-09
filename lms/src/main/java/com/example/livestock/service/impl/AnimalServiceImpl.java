@@ -3,6 +3,8 @@ package com.example.livestock.service.impl;
 import com.example.livestock.dto.AnimalRequest;
 import com.example.livestock.dto.AnimalResponse;
 import com.example.livestock.entity.Animal;
+import com.example.livestock.enums.AnimalStatus;
+import com.example.livestock.enums.NotificationType;
 import com.example.livestock.exception.BadRequestException;
 import com.example.livestock.exception.ResourceNotFoundException;
 import com.example.livestock.mapper.DtoMapper;
@@ -10,6 +12,7 @@ import com.example.livestock.repository.AnimalRepository;
 import com.example.livestock.repository.OwnerRepository;
 import com.example.livestock.security.CurrentUserService;
 import com.example.livestock.service.AnimalService;
+import com.example.livestock.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,7 @@ public class AnimalServiceImpl implements AnimalService {
     private final AnimalRepository animalRepository;
     private final OwnerRepository ownerRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     @Override
     public AnimalResponse create(AnimalRequest request) {
@@ -31,7 +35,10 @@ public class AnimalServiceImpl implements AnimalService {
         }
         Animal animal = new Animal();
         apply(animal, request);
-        return DtoMapper.toAnimal(animalRepository.save(animal));
+        Animal saved = animalRepository.save(animal);
+        notificationService.notify(saved.getOwner().getUser(), "Animal added",
+                saved.getTagNumber() + " was added to your livestock records.", NotificationType.ANIMAL_ADDED);
+        return DtoMapper.toAnimal(saved);
     }
 
     @Override
@@ -53,7 +60,12 @@ public class AnimalServiceImpl implements AnimalService {
     public AnimalResponse update(Long id, AnimalRequest request) {
         Animal animal = animalRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Animal not found"));
+        AnimalStatus oldStatus = animal.getAnimalStatus();
         apply(animal, request);
+        if (oldStatus != animal.getAnimalStatus()) {
+            notificationService.notify(animal.getOwner().getUser(), "Animal status updated",
+                    animal.getTagNumber() + " is now marked as " + animal.getAnimalStatus(), NotificationType.ANIMAL_STATUS_UPDATE);
+        }
         return DtoMapper.toAnimal(animal);
     }
 

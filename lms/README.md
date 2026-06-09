@@ -80,6 +80,33 @@ Use the returned JWT:
 Authorization: Bearer <token>
 ```
 
+Request OTP:
+
+```http
+POST /api/auth/otp/request
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "admin@livestock.local"
+}
+```
+
+Verify OTP:
+
+```http
+POST /api/auth/otp/verify
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "admin@livestock.local",
+  "code": "123456"
+}
+```
+
 ## Main Admin Endpoints
 
 - `POST /api/admin/owners`
@@ -177,6 +204,8 @@ Export report:
 ## Security Rules Implemented
 
 - Passwords are BCrypt-hashed.
+- OTP codes are hashed in the database and expire automatically.
+- OTP emails are sent using Spring Mail configuration from `.env`.
 - JWT protects all non-login endpoints.
 - Admin routes require `ADMIN`.
 - Owner routes require `OWNER`.
@@ -184,7 +213,29 @@ Export report:
 - Owners cannot create or update breeding, health, vaccination, animal, or ownership records.
 - Soft delete sets `active=false`; normal owner reads only return active records.
 - Audit fields are populated using JPA auditing.
+- JPA repositories and derived queries avoid raw SQL string concatenation, reducing SQL injection risk.
+- Bean Validation rejects invalid request bodies before service logic runs.
+- Authentication endpoints have a simple IP-based rate limiter.
+- Security headers include HSTS, content security policy, frame protection, and no-referrer policy.
+
+## Notifications
+
+Notifications are created when:
+
+- Admin adds an animal to an owner.
+- Admin changes animal status, for example `SOLD`, `DEAD`, or `TRANSFERRED`.
+- Admin adds or updates breeding records.
+- A cow has an actual birth date recorded.
+- Admin adds health records.
+- Admin adds vaccination records.
+- Vaccination due date is near.
+- Owner sends a message to admin.
+- Admin replies to owner.
+- User requests OTP.
+- User generates a report.
 
 ## Notes
 
 This project uses H2 by default for quick frontend integration. Set the database environment variables above to run against PostgreSQL or MySQL in production.
+
+Do not commit real production secrets in `.env`. Use hosting-provider environment variables or a secret manager for deployed systems.

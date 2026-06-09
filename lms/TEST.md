@@ -45,6 +45,47 @@ In Swagger, click **Authorize** and enter:
 Bearer YOUR_ADMIN_TOKEN_HERE
 ```
 
+## 1A. Request And Verify OTP
+
+Open:
+
+```text
+POST /api/auth/otp/request
+```
+
+Request body:
+
+```json
+{
+  "email": "admin@livestock.local"
+}
+```
+
+Expected result:
+
+- Status `200`
+- OTP is sent to the configured email address
+
+Open:
+
+```text
+POST /api/auth/otp/verify
+```
+
+Request body:
+
+```json
+{
+  "email": "admin@livestock.local",
+  "code": "123456"
+}
+```
+
+Expected result:
+
+- Status `200` if the real emailed code is used
+- Status `400` if the code is wrong or expired
+
 ## 2. Create An Owner
 
 Open:
